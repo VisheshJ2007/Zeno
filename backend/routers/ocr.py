@@ -31,6 +31,9 @@ import asyncio
 from ..utils.llm import summarize_text  # type: ignore[reportMissingImports]
 from pymongo.errors import DuplicateKeyError, PyMongoError
 
+# Import RAG integration for automatic processing
+from backend.api.rag.ocr_integration import process_ocr_output_for_rag
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,7 +51,7 @@ router = APIRouter(prefix="/api/ocr", tags=["OCR Transcription"])
     response_model=TranscriptionResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Submit OCR transcription",
-    description="Process and store OCR transcription data in MongoDB"
+    description="Process and store OCR transcription data in MongoDB and trigger RAG processing"
 )
 async def transcribe_document(request: TranscriptionRequest, background_tasks: BackgroundTasks) -> TranscriptionResponse:
     """
@@ -102,7 +105,7 @@ async def transcribe_document(request: TranscriptionRequest, background_tasks: B
         response = TranscriptionResponse(
             success=True,
             transcription_id=transcription_id,
-            message="Transcription processed successfully",
+            message="Transcription processed successfully and queued for RAG processing",
             created_at=datetime.utcnow().isoformat()
         )
 

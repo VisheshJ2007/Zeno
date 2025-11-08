@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-200 to-blue-300">
+  <div class="w-[550px] bg-white rounded-3xl border border-gray-300 shadow-md p-6 text-center relative">
+
+    <div class="bg-[#0B162C] text-white font-semibold px-2 py-1 rounded-md hover:bg-[#162a4d] transition">
+      Review
+    </div>
+
+    <div class="space-y-2 mb-4">
+      <label class="block font-semibold text-gray-700">Choose Subject</label>
+      <div class="flex items-center justify-center">
+        <select class="border border-gray-400 rounded-md px-3 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option>Select Subject</option>
+        </select>
+        
+      </div>
+    </div>
+
+    <div class="space-y-2 mb-4">
+      <label class="block font-semibold text-gray-700">Choose Topic</label>
+      <div class="flex items-center justify-center">
+        <select class="border border-gray-400 rounded-md px-3 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option>Select Topic</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="space-y-2 mb-6">
+      <label class="block font-semibold text-gray-700">Describe in a few words what you want to include in this review</label>
+      <textarea rows="2" class="border border-gray-400 rounded-md px-3 py-2 w-3/4 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-md mx-auto block"></textarea>
+    </div>
+
+    <button class="bg-[#0B162C] text-white font-semibold px-8 py-2 rounded-md hover:bg-[#162a4d] transition">
+      Start
+    </button>
+
+  </div>
+</body>
+</html>
