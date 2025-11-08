@@ -169,6 +169,45 @@ async def summarize_and_update(transcription_id: str, text: str) -> None:
             logger.exception(f"Failed to record summarization error for {transcription_id}")
 
 
+@router.post(
+    "/transcription/{transcription_id}/summarize",
+    summary="Re-run summarization for a transcription",
+    description="Enqueue a background job to re-run LLM summarization for the given transcription id"
+)
+async def rerun_summarization_endpoint(transcription_id: str, background_tasks: BackgroundTasks):
+    """Admin-friendly endpoint to re-run the LLM summarization for an existing transcription.
+
+    This schedules the same background job used during ingest. It will return 202 if queued.
+    """
+    try:
+        mongo_manager = get_mongo_manager()
+        collection = mongo_manager.collection
+
+        doc = await get_transcription_by_id(collection, transcription_id)
+        if not doc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transcription not found")
+
+        # Attempt to locate cleaned text
+        text = None
+        if isinstance(doc.get("content"), dict):
+            text = doc["content"].get("cleaned_text") or doc["content"].get("raw_text")
+        if not text:
+            text = doc.get("searchable_text")
+
+        if not text:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No text available to summarize")
+
+        background_tasks.add_task(summarize_and_update, transcription_id, text)
+
+        return {"queued": True, "transcription_id": transcription_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to enqueue summarization")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 # ============================================================================
 # Query Endpoints
 # ============================================================================

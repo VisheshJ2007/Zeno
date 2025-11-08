@@ -102,10 +102,10 @@
         <!-- Key Topics -->
         <div class="bg-white rounded-2xl p-6 shadow">
           <h2 class="font-semibold text-gray-700">KEY TOPICS</h2>
-          <ul class="list-disc list-inside mt-3 text-gray-600">
-            <li>Bullet 1</li>
-            <li>Bullet 2</li>
-          </ul>
+            <ul id="key-topics-list" class="list-disc list-inside mt-3 text-gray-600">
+              <li>Bullet 1</li>
+              <li>Bullet 2</li>
+            </ul>
         </div>
       </div>
 
@@ -114,10 +114,24 @@
         <!-- Upload Files -->
         <div class="bg-white rounded-2xl p-6 shadow flex flex-col items-center justify-center text-center">
           <h2 class="font-semibold text-gray-700 mb-4">UPLOAD FILES</h2>
-          <div class="border-2 border-dashed border-gray-400 rounded-full w-24 h-24 flex items-center justify-center mb-4">
-            <img src="upload-icon.png" alt="Upload" class="w-8 h-8">
+
+          <div id="uploadDrop" class="border-2 border-dashed border-gray-400 rounded-full w-36 h-36 flex items-center justify-center mb-4 p-4">
+            <div class="text-center text-sm text-gray-600">
+              <img src="upload-icon.png" alt="Upload" class="w-10 h-10 mx-auto mb-1">
+              <div id="uploadHint">Select an image / PDF</div>
+            </div>
           </div>
-          <button id="viewUploadsBtn" class="bg-[#0B1736] text-white px-6 py-2 rounded-full">View Uploaded Files</button>
+
+          <input id="fileInput" type="file" accept="image/*,application/pdf" class="hidden">
+          <div class="flex gap-3">
+            <button id="chooseFileBtn" class="bg-white border px-4 py-2 rounded">Choose File</button>
+            <button id="startOCRBtn" class="bg-[#0B1736] text-white px-6 py-2 rounded-full">Start OCR</button>
+          </div>
+
+          <div id="ocrStatus" class="mt-3 text-sm text-gray-500">No file chosen</div>
+
+          <button id="viewUploadsBtn" class="mt-3 bg-[#0B1736] text-white px-6 py-2 rounded-full">View Uploaded Files</button>
+
           <!-- Uploaded transcriptions list (hidden until requested) -->
           <div id="transcriptionsSection" class="mt-4 w-full hidden">
             <h3 class="font-semibold text-gray-700 mb-2">Your Uploads</h3>
@@ -150,6 +164,14 @@
   </div>
 
   <script>
+    // Load Tesseract.js dynamically for client-side OCR
+    (function injectTesseract(){
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js';
+      s.async = true;
+      document.head.appendChild(s);
+    })();
+
     // API base
     const API = (window.ZENO_AUTH_CONFIG && window.ZENO_AUTH_CONFIG.API_BASE) || "http://localhost:8000";
     // token is optional — site can run without login
@@ -172,14 +194,43 @@
     }
 
     async function api(path, opts = {}) {
+      // default timeout for requests (ms)
+      const DEFAULT_TIMEOUT = 20000; // 20s
       const headers = { "Content-Type": "application/json" };
       try {
         const token = localStorage.getItem('zeno_token');
         if (token) headers["Authorization"] = `Bearer ${token}`;
       } catch {}
-      const res = await fetch(`${API}${path}`, { headers, ...opts });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
-      return res.json();
+
+      // Use AbortController to implement a timeout so the UI doesn't hang on network issues
+      const controller = new AbortController();
+      const timeout = (opts && opts.timeout) || DEFAULT_TIMEOUT;
+      const signal = controller.signal;
+
+      const fetchOpts = { headers, signal, ...opts };
+      // Make sure callers don't accidentally pass a signal
+      delete fetchOpts.signal;
+
+      const timer = setTimeout(() => controller.abort(), timeout);
+      try {
+        const res = await fetch(`${API}${path}`, { headers, signal, ...opts });
+        clearTimeout(timer);
+        if (!res.ok) {
+          // try to show response body for debugging
+          let text = '';
+          try { text = await res.text(); } catch (e) { text = ''; }
+          throw new Error(`${res.status} ${res.statusText}${text ? `: ${text}` : ''}`);
+        }
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) return res.json();
+        return res.text();
+      } catch (err) {
+        clearTimeout(timer);
+        if (err && err.name === 'AbortError') {
+          throw new Error('Request timed out (network or server not responding)');
+        }
+        throw err;
+      }
     }
 
     async function loadProfile() {
@@ -268,6 +319,134 @@
     });
 
     document.getElementById('viewUploadsBtn').addEventListener('click', () => loadTranscriptions());
+
+    // Guest OCR flow (no sign-in required)
+    const fileInput = document.getElementById('fileInput');
+    const chooseFileBtn = document.getElementById('chooseFileBtn');
+    const startOCRBtn = document.getElementById('startOCRBtn');
+    const ocrStatus = document.getElementById('ocrStatus');
+    let selectedFile = null;
+
+    chooseFileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      selectedFile = e.target.files[0];
+      if (selectedFile) {
+        ocrStatus.textContent = `Selected: ${selectedFile.name}`;
+      } else {
+        ocrStatus.textContent = 'No file chosen';
+      }
+    });
+
+    startOCRBtn.addEventListener('click', async () => {
+      if (!selectedFile) {
+        alert('Please choose a file first');
+        return;
+      }
+
+      // Wait for Tesseract to load
+      if (!window.Tesseract) {
+        ocrStatus.textContent = 'Loading OCR engine…';
+        await new Promise((res) => {
+          const check = setInterval(() => {
+            if (window.Tesseract) { clearInterval(check); res(true); }
+          }, 200);
+        });
+      }
+
+      try {
+        ocrStatus.textContent = 'Processing… (this may take a few seconds)';
+        const worker = window.Tesseract.createWorker({ logger: m => {
+          if (m && m.status && m.progress!=null) {
+            ocrStatus.textContent = `${m.status}: ${(m.progress*100).toFixed(0)}%`;
+          }
+        }});
+
+        await worker.load();
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        const { data } = await worker.recognize(selectedFile);
+        await worker.terminate();
+
+        const rawText = data && data.text ? data.text : '';
+        const confidence = data && data.confidence ? data.confidence : 0;
+
+        ocrStatus.textContent = 'Uploading transcription to server…';
+
+        // Prepare minimal structured_content
+        const paragraphs = rawText.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+        const word_count = (rawText.match(/\b\w+\b/g) || []).length;
+
+        const payload = {
+          filename: selectedFile.name || 'upload',
+          file_metadata: {
+            original_filename: selectedFile.name || 'upload',
+            file_size_bytes: selectedFile.size || 0,
+            file_type: selectedFile.type || 'image',
+            upload_timestamp: new Date().toISOString()
+          },
+          ocr_data: {
+            raw_text: rawText,
+            cleaned_text: rawText,
+            confidence: confidence,
+            processing_time_ms: 0,
+            language: 'eng'
+          },
+          structured_content: {
+            document_type: 'unknown',
+            sections: [],
+            paragraphs: paragraphs,
+            detected_subject: null,
+            word_count: word_count,
+            has_formulas: false,
+            has_tables: false,
+            has_lists: false
+          },
+          user_id: 'guest'
+        };
+
+        const resp = await api('/api/ocr/transcribe', { method: 'POST', body: JSON.stringify(payload) });
+        const tid = resp.transcription_id || resp.transcriptionId || null;
+        if (!tid) {
+          ocrStatus.textContent = 'Upload succeeded but no transcription id returned';
+          return;
+        }
+
+        // Persist last transcription id for guest users so we can load Key Topics
+        try { localStorage.setItem('last_transcription_id', tid); } catch(e) {}
+        // Trigger a short-delayed attempt to fetch topics (polling continues below)
+        setTimeout(() => { try { loadKeyTopicsForGuest(); } catch(e){} }, 500);
+
+        ocrStatus.textContent = `Transcription saved (id: ${tid}). Waiting for summary...`;
+
+        // Poll for summary
+        const start = Date.now();
+        const timeout = 60 * 1000; // 60s
+        let got = false;
+        while (Date.now() - start < timeout && !got) {
+          await new Promise(r => setTimeout(r, 2000));
+          try {
+            const doc = await api(`/api/ocr/transcription/${tid}`);
+            const summary = doc.content?.summary;
+            const topics = doc.content?.key_topics || [];
+            if (summary) {
+              ocrStatus.innerHTML = `<strong>Summary:</strong> ${escapeHtml(summary)}<br/><strong>Topics:</strong> ${topics.map(t=>escapeHtml(t)).join(', ')}`;
+              got = true;
+              break;
+            }
+          } catch (e) {
+            console.warn('poll error', e);
+          }
+        }
+
+        if (!got) {
+          ocrStatus.textContent = 'Summary not ready yet. It will appear under View Uploaded Files.';
+        }
+
+      } catch (err) {
+        console.error('OCR failed', err);
+        ocrStatus.textContent = 'OCR failed: ' + (err.message || err);
+      }
+    });
 
     const planForm = document.getElementById("planForm");
     const planMsg = document.getElementById("planMsg");
@@ -359,9 +538,53 @@
       return (s || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     }
 
-    ping();
-    loadProfile();
-    loadPlans();
+    // --- Key Topics helpers (render dashboard top-box from latest transcription) ---
+    function renderKeyTopics(topics) {
+      const container = document.getElementById('key-topics-list');
+      if (!container) return;
+      if (!topics || !topics.length) {
+        container.innerHTML = '<li class="text-gray-500">No topics yet.</li>';
+        return;
+      }
+      container.innerHTML = topics.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+    }
+
+    async function loadKeyTopicsForUser() {
+      try {
+        if (!window.currentUser) return;
+        const resp = await api(`/api/ocr/user/${window.currentUser.id}/transcriptions`);
+        const items = resp.transcriptions || resp.results || [];
+        for (const t of items) {
+          if (t.content && Array.isArray(t.content.key_topics) && t.content.key_topics.length) {
+            renderKeyTopics(t.content.key_topics);
+            return;
+          }
+        }
+        renderKeyTopics([]);
+      } catch (e) {
+        console.warn('Failed loading key topics:', e);
+        renderKeyTopics([]);
+      }
+    }
+
+    async function loadKeyTopicsForGuest() {
+      try {
+        const tid = localStorage.getItem('last_transcription_id');
+        if (!tid) return;
+        const doc = await api(`/api/ocr/transcription/${tid}`);
+        const topics = doc.content?.key_topics || [];
+        renderKeyTopics(topics);
+      } catch (e) {
+        console.warn('Failed loading guest key topics:', e);
+      }
+    }
+
+  ping();
+  loadProfile();
+  loadPlans();
+  // Attempt to populate the top Key Topics box for guest and signed-in users
+  try { loadKeyTopicsForGuest(); } catch(e){}
+  try { loadKeyTopicsForUser(); } catch(e){}
   </script>
 </body>
 </html>
