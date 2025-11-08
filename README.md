@@ -1,82 +1,82 @@
 # Zeno AI Tutoring Platform
 
-> Complete learning platform with OCR document processing, RAG-powered content generation, and advanced spaced repetition learning system.
-
-## 📋 Quick Links
-
-- **[Setup Guide](./SETUP_GUIDE.md)** - Complete installation and configuration
-- **[Testing Guide](./TESTING_GUIDE.md)** - Comprehensive testing documentation  
-- **[API Documentation](http://localhost:8000/docs)** - Swagger UI (when server is running)
+AI-powered learning platform with OCR processing, RAG content generation, and spaced repetition learning.
 
 ---
 
-## 🎯 Overview
+## 🎯 Features
 
-Zeno combines three powerful systems into one platform:
+### OCR Document Processing
+- Client-side Tesseract.js OCR
+- Intelligent text cleaning (50+ error fixes)
+- Auto-detect document type & subject
+- MongoDB full-text search
 
-1. **OCR Document Processing** - Extract and verify text from educational documents
-2. **RAG Content Generation** - AI-powered educational content from course materials
-3. **Learning Management System** - Spaced repetition, skill tracking, and analytics
+### RAG Content Generation
+- Azure OpenAI (GPT-4 + embeddings)
+- MongoDB Atlas vector search
+- Generate: quizzes, flashcards, lesson plans, exams
+- Educational guardrails (prevent homework cheating)
+- Socratic tutoring chat
 
-### Key Features
-
-- 📄 **Client-Side OCR** - Process documents without server load
-- 🧠 **RAG Integration** - Generate content from course materials
-- 🎓 **FSRS Algorithm** - Modern spaced repetition (90% vs 80% accuracy)
-- 📊 **Topic Analytics** - Track accuracy as difficulty increases
-- 🛡️ **Educational Guardrails** - Prevent homework cheating
-- 🔄 **Interleaved Practice** - Mix topics for +20% retention
+### Learning Management System
+- **FSRS Spaced Repetition** - 90% accuracy (vs 80% for SM-2)
+- **Interleaved Practice** - +20% retention
+- **Question Bank** - RAG-generated with IRT calibration
+- **Skill Tracking** - Checklist with mastery levels
+- **Topic Analytics** - Accuracy over time
+- **Syllabus Alignment** - Coverage gap analysis
 
 ---
 
 ## 🚀 Quick Start
 
-**⚠️ Required API Keys:** MongoDB Atlas + Azure OpenAI (see [SETUP_GUIDE.md](./SETUP_GUIDE.md) Section 1)
+**Required:** MongoDB Atlas + Azure OpenAI API keys
 
 ```bash
-# 1. Backend Setup
+# 1. Setup API keys
+# See API_KEYS.md for where to get keys
 cd backend
+cp .env.example .env
+# Edit .env with your keys
+
+# 2. Install & run backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # ⚠️ Edit with YOUR API keys!
 python -m api.rag.mongodb_setup
 python -m api.learning.setup_indexes
 uvicorn main:app --reload
 
-# 2. Frontend Setup
-cd frontend
+# 3. Install & run frontend
+cd ../frontend
 npm install
 npm run dev
 
-# 3. Verify
+# 4. Verify
 curl http://localhost:8000/health
-curl http://localhost:8000/api/rag/health
-curl http://localhost:8000/api/learning/health
 ```
 
-⚠️ **Critical Steps:**
-1. Get API keys (MongoDB + Azure OpenAI)
-2. Configure `.env` with your keys
-3. Create vector search index in MongoDB Atlas UI
-See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for details
+**⚠️ Don't forget:** Create vector search index in MongoDB Atlas UI
+→ See [SETUP.md](./SETUP.md) for details
 
 ---
 
 ## 📚 Documentation
 
-| Document | Description |
-|----------|-------------|
-| [SETUP_GUIDE.md](./SETUP_GUIDE.md) | Complete setup for all systems |
-| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | Testing and test cases |
-| [OCR_SYSTEM_README.md](./OCR_SYSTEM_README.md) | OCR pipeline details |
+| Doc | Purpose |
+|-----|---------|
+| [API_KEYS.md](./API_KEYS.md) | Where to put API keys |
+| [SETUP.md](./SETUP.md) | Installation guide |
+| [TESTING.md](./TESTING.md) | Quick tests |
+| http://localhost:8000/docs | API reference (Swagger) |
 
 ---
 
 ## 🛠️ Tech Stack
 
-**Frontend**: Next.js 14, React 18, TypeScript, Tesseract.js, Tailwind  
-**Backend**: FastAPI, Python 3.10+, Pydantic, Motor (async MongoDB)  
-**Infrastructure**: MongoDB Atlas, Azure OpenAI (GPT-4 + Embeddings)
+**Backend:** FastAPI, Python 3.10+, Motor (async MongoDB), Azure OpenAI
+**Frontend:** Next.js 14, React 18, TypeScript, Tesseract.js, Tailwind
+**Infrastructure:** MongoDB Atlas (vector search), Azure OpenAI (GPT-4 + embeddings)
 
 ---
 
@@ -86,76 +86,92 @@ See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for details
 Zeno/
 ├── backend/
 │   ├── api/
-│   │   ├── learning/      # Learning Management System (~4,000 lines)
-│   │   ├── rag/           # RAG System
+│   │   ├── learning/      # Learning Management System
+│   │   ├── rag/           # RAG engine
 │   │   ├── guardrails/    # Educational guardrails
-│   │   └── routes/        # API routes
+│   │   └── routes/        # API endpoints
 │   ├── routers/ocr.py     # OCR endpoints
 │   └── main.py
 ├── frontend/
-│   ├── components/        # React components
-│   ├── services/          # API clients
-│   └── utils/             # OCR processing
-└── docs/                  # Documentation
+│   ├── components/learning/  # React components
+│   ├── services/             # API clients
+│   └── utils/                # OCR processing
+└── docs/                     # Documentation
 ```
 
 ---
 
-## 📊 Features by System
+## 💰 Costs
 
-### OCR Document Processing
-- Client-side Tesseract.js OCR
-- Intelligent text cleaning (50+ error fixes)
-- Auto-detect document type & subject
-- Full-text search in MongoDB
-
-### RAG Content Generation
-- Intelligent chunking by document type
-- Vector search with 1536-dim embeddings
-- Generate: quizzes, flashcards, lesson plans, exams
-- Chat with Socratic tutoring
-- Educational guardrails
-
-### Learning Management System
-- **FSRS Spaced Repetition** - Optimal review scheduling
-- **Interleaved Practice** - Mix topics for retention
-- **Question Bank** - Persistent with IRT calibration
-- **Skill Tracking** - Syllabus extraction, prerequisites
-- **Analytics** - Accuracy trends by topic/difficulty
-- **Syllabus Alignment** - Coverage gap analysis
+- **Development:** Free (M0 MongoDB + Azure pay-as-you-go)
+- **Production:** ~$110-280/month (M10 MongoDB $57 + Azure OpenAI $50-200)
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-# Backend tests
-cd backend && pytest
+# Quick health check
+curl http://localhost:8000/api/rag/health
+curl http://localhost:8000/api/learning/health
 
-# Frontend tests  
-cd frontend && npm test
-
-# Integration tests
-npm run test:integration
+# See TESTING.md for full test suite
 ```
-
-See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for details.
 
 ---
 
-## 💰 Monthly Costs (Production)
+## 📊 Features by System
 
-- MongoDB Atlas M10: $57
-- Azure OpenAI: $50-200
-- **Total**: ~$110-280/month
+### OCR (Existing)
+- Upload & process images/PDFs
+- Client-side OCR with Tesseract.js
+- Smart text cleaning
+- MongoDB storage
+
+### RAG (New)
+- Document chunking by type
+- Vector embeddings (1536-dim)
+- Semantic search
+- Content generation (quizzes, flashcards, etc.)
+- Chat with guardrails
+
+### Learning (New)
+- FSRS spaced repetition
+- Interleaved practice sessions
+- Question bank with analytics
+- Skill tracking & checklist
+- Progress analytics
+- Syllabus alignment
+
+---
+
+## 🔗 API Endpoints
+
+**OCR:** `/api/ocr/*`
+**RAG:** `/api/rag/*` (9 endpoints)
+**Chat:** `/api/chat/*` (4 endpoints)
+**Learning:** `/api/learning/*` (25+ endpoints)
+
+**Interactive docs:** http://localhost:8000/docs
+
+---
+
+## 🆘 Troubleshooting
+
+See [SETUP.md](./SETUP.md) troubleshooting section.
+
+Common issues:
+- **MongoDB connection:** Check `.env` URI and Atlas IP whitelist
+- **Azure OpenAI:** Verify endpoint ends with `/` and models deployed
+- **Vector index:** Must create manually in Atlas UI
 
 ---
 
 ## 📖 Learn More
 
-- MongoDB Atlas: https://mongodb.com/docs/atlas
-- Azure OpenAI: https://learn.microsoft.com/azure/ai-services/openai
-- FSRS Algorithm: https://github.com/open-spaced-repetition/fsrs4anki
+- [MongoDB Atlas](https://mongodb.com/docs/atlas)
+- [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai)
+- [FSRS Algorithm](https://github.com/open-spaced-repetition/fsrs4anki)
 
 ---
 
