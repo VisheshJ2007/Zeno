@@ -10,14 +10,14 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from backend.models.transcription import (
+from ..models.transcription import (
     TranscriptionRequest,
     TranscriptionResponse,
     ErrorResponse,
     create_mongodb_document
 )
-from backend.database.mongodb import get_mongo_manager
-from backend.database.operations import (
+from ..database.mongodb import get_mongo_manager  # type: ignore[reportMissingImports]
+from ..database.operations import (  # type: ignore[reportMissingImports]
     insert_transcription,
     get_transcription_by_id,
     get_user_transcriptions,
@@ -27,6 +27,8 @@ from backend.database.operations import (
     delete_transcription,
     create_indexes
 )
+import asyncio
+from ..utils.llm import summarize_text  # type: ignore[reportMissingImports]
 from pymongo.errors import DuplicateKeyError, PyMongoError
 
 # Import RAG integration for automatic processing
@@ -51,10 +53,7 @@ router = APIRouter(prefix="/api/ocr", tags=["OCR Transcription"])
     summary="Submit OCR transcription",
     description="Process and store OCR transcription data in MongoDB and trigger RAG processing"
 )
-async def transcribe_document(
-    request: TranscriptionRequest,
-    background_tasks: BackgroundTasks
-) -> TranscriptionResponse:
+async def transcribe_document(request: TranscriptionRequest, background_tasks: BackgroundTasks) -> TranscriptionResponse:
     """
     Process and store OCR transcription
 
@@ -96,43 +95,11 @@ async def transcribe_document(
         # Insert into MongoDB
         await insert_transcription(collection, document)
 
-        # Trigger RAG processing in background
+        # Kick off background summarization job (non-blocking)
         try:
-            # Extract text for RAG processing
-            ocr_text = request.structured_content.full_text or request.ocr_data.cleaned_text
-
-            # Get document type
-            doc_type = request.structured_content.document_type or "lecture_notes"
-
-            # Generate course_id from user_id
-            course_id = f"user_{request.user_id}_course"
-
-            logger.info(f"Queueing RAG processing for transcription {transcription_id}")
-
-            # Process document for RAG (chunking, embeddings, storage)
-            await process_ocr_output_for_rag(
-                ocr_text=ocr_text,
-                course_id=course_id,
-                doc_type=doc_type,
-                source_file=request.filename,
-                metadata={
-                    "transcription_id": transcription_id,
-                    "user_id": request.user_id,
-                    "document_type": doc_type,
-                    "word_count": request.structured_content.word_count,
-                    "detected_subject": request.structured_content.detected_subject,
-                    "has_formulas": request.structured_content.has_formulas,
-                    "upload_timestamp": request.file_metadata.upload_timestamp
-                },
-                background_tasks=background_tasks
-            )
-
-            logger.info(f"RAG processing queued successfully for {transcription_id}")
-
-        except Exception as rag_error:
-            # Log error but don't fail the transcription
-            logger.error(f"RAG processing failed for {transcription_id}: {str(rag_error)}")
-            logger.warning("Transcription saved but RAG processing unavailable")
+            background_tasks.add_task(summarize_and_update, transcription_id, request.ocr_data.cleaned_text)
+        except Exception as e:
+            logger.error(f"Failed to schedule summarization for {transcription_id}: {e}")
 
         # Create response
         response = TranscriptionResponse(
@@ -173,6 +140,36 @@ async def transcribe_document(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+async def summarize_and_update(transcription_id: str, text: str) -> None:
+    """Background task: summarize text using LLM and update MongoDB document."""
+    logger.info(f"Starting summarization background task for {transcription_id}")
+    mongo_manager = get_mongo_manager()
+    collection = mongo_manager.collection
+
+    try:
+        # Run the potentially blocking LLM call in a thread
+        result = await asyncio.to_thread(summarize_text, text)
+
+        summary = result.get("summary", "")
+        key_topics = result.get("key_topics", [])
+
+        update_doc = {
+            "content.summary": summary,
+            "content.key_topics": key_topics,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+
+        await collection.update_one({"transcription_id": transcription_id}, {"$set": update_doc})
+        logger.info(f"Summarization saved for {transcription_id}")
+
+    except Exception as e:
+        logger.exception(f"LLM summarization failed for {transcription_id}: {e}")
+        try:
+            await collection.update_one({"transcription_id": transcription_id}, {"$set": {"summary_error": str(e), "updated_at": datetime.utcnow().isoformat()}})
+        except Exception:
+            logger.exception(f"Failed to record summarization error for {transcription_id}")
 
 
 # ============================================================================

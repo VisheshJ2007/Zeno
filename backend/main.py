@@ -1,123 +1,61 @@
+# backend/main.py
+import os, sys
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import logging
 from typing import Optional, List
 from bson import ObjectId
 
-from database import db
+# IMPORTANT: run from repo root
+# python -m uvicorn backend.main:app --reload --port 8000
+from backend.database import db
+from backend.routers.auth import router as auth_router  # explicit submodule import
 
-# Import routers
-from routers.ocr import router as ocr_router
-from database.mongodb import get_mongo_manager, close_mongo_connection
+app = FastAPI(title="Zeno API")
 
-# Import RAG and Chat routers
-from api.routes.rag_routes import router as rag_router
-from api.routes.chat_routes import router as chat_router
-from api.routes.learning_routes import router as learning_router
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-# Create FastAPI app
-app = FastAPI(
-    title="Zeno API",
-    description="AI-powered tutoring platform with OCR document processing",
-    version="1.0.0"
-)
-
-# CORS middleware
+# --- CORS: allow local dev (Live Server / localhost) ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
         "http://localhost:3000",
-        "http://localhost:3001",
-        # Add your production frontend URL here
+        "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(ocr_router)
-app.include_router(rag_router)
-app.include_router(chat_router)
-app.include_router(learning_router)
-
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    """Initialize connections on startup"""
-    logger.info("Starting Zeno API with RAG capabilities...")
-    try:
-        # Initialize MongoDB connection
-        mongo_manager = get_mongo_manager()
-        health = mongo_manager.health_check()
-        if health.get("status") == "healthy":
-            logger.info("✓ MongoDB connection established successfully")
-        else:
-            logger.warning(f"MongoDB connection issue: {health}")
-
-        # Check RAG system health
-        from api.rag.rag_engine import rag_engine
-        rag_health = rag_engine.health_check()
-        logger.info(f"RAG system status: {rag_health['status']}")
-
-        # Check guardrails
-        from api.guardrails.middleware import guardrails
-        guardrails_health = guardrails.health_check()
-        if guardrails_health['enabled']:
-            logger.info("✓ Educational guardrails enabled")
-        else:
-            logger.warning("⚠️  Educational guardrails disabled")
-
-        # Check learning system
-        logger.info("✓ Learning Management System initialized")
-
-    except Exception as e:
-        logger.error(f"Failed to initialize services: {str(e)}")
-
-# Shutdown event
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup connections on shutdown"""
-    logger.info("Shutting down Zeno API...")
-    close_mongo_connection()
-    logger.info("Connections closed")
-
-# Health check endpoint
-# ----------------- helpers -----------------
+# ---------- small helpers ----------
 def to_public(doc: dict | None):
-    """Convert Mongo document to response-safe dict (stringify _id)."""
+    """Convert Mongo _id to string id and remove private fields."""
     if not doc:
         return None
     doc["id"] = str(doc["_id"])
     doc.pop("_id", None)
     return doc
 
-# ----------------- health / db ping -----------------
+# ---------- health + ping ----------
 @app.get("/health")
 def health():
-    """Basic health check endpoint"""
-    return {"ok": True, "service": "zeno-api"}
+    return {"ok": True}
 
-# Original planning endpoint (kept for backward compatibility)
 @app.get("/db-ping")
 async def db_ping():
-    """Ping Atlas and surface any error text so it's easy to debug."""
     try:
         await db.command("ping")
         return {"mongo": "ok"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-# ----------------- models -----------------
+# ---------- models ----------
 class PlanIn(BaseModel):
     user: Optional[str] = None
     topic: str
@@ -127,17 +65,7 @@ class PlanUpdate(BaseModel):
     topic: Optional[str] = None
     notes: Optional[str] = None
 
-# ----------------- demo (kept from your file) -----------------
-@app.post("/plan")
-def plan(inp: PlanIn):
-    """Generate study plan for a topic"""
-def plan_demo(inp: PlanIn):
-    return {
-        "goals": ["Understand key ideas", "Practice 3 problems", "Exit ticket"],
-        "checkpoints": ["Warmup", "Core", "Challenge"],
-    }
-
-# ----------------- MongoDB CRUD for plans -----------------
+# ---------- CRUD: plans ----------
 @app.post("/plans", response_model=dict)
 async def create_plan(plan: PlanIn):
     payload = plan.model_dump()
@@ -147,8 +75,8 @@ async def create_plan(plan: PlanIn):
 
 @app.get("/plans", response_model=List[dict])
 async def list_plans(user: Optional[str] = None):
-    q = {"user": user} if user else {}
-    cursor = db.plans.find(q).sort([("_id", -1)]).limit(100)
+    query = {"user": user} if user else {}
+    cursor = db.plans.find(query).sort([("_id", -1)]).limit(100)
     return [to_public(d) async for d in cursor]
 
 @app.get("/plans/{plan_id}", response_model=dict)
@@ -180,3 +108,13 @@ async def delete_plan(plan_id: str):
     except Exception:
         raise HTTPException(400, "Invalid plan id")
     return {"deleted": res.deleted_count == 1}
+
+@app.on_event("startup")
+async def startup_indexes():
+    # ensure unique constraints for auth
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("username", unique=True)
+
+# include routers (auth, etc.)
+app.include_router(auth_router)
+
