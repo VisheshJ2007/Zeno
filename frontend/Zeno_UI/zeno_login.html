@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zeno Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+
+    .left {
+      flex: 1;
+      background-color: #0f172a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .left h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .left p {
+      color: #cbd5e1;
+      font-size: 1rem;
+    }
+
+    .right {
+      flex: 1;
+      background-color: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .form-container {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 320px;
+    }
+
+    .tab-buttons {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-buttons button {
+      border: none;
+      background-color: #e2e8f0;
+      color: #0f172a;
+      padding: 0.5rem 1rem;
+      margin: 0 5px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .tab-buttons button.active {
+      background-color: #0f172a;
+      color: white;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      font-size: 1rem;
+    }
+
+    .form-container button.submit {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      background-color: #0f172a;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 1rem 0;
+      color: #64748b;
+      position: relative;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: #cbd5e1;
+    }
+
+    .divider::before {
+      left: 0;
+    }
+    .divider::after {
+      right: 0;
+    }
+
+    .social-login {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .social-login button {
+      flex: 1;
+      margin: 0 5px;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background-color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .signup-link {
+      text-align: center;
+      margin-top: 1rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .signup-link a {
+      color: #0f172a;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .msg {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .msg.error { color: #b91c1c; }
+    .msg.success { color: #065f46; }
+    .helper { font-size: 0.8rem; color: #64748b; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <div class="left">
+    <h1>Welcome Back</h1>
+    <p>Log in to continue your streak and access your personalized study plan.</p>
+  </div>
+
+  <div class="right">
+    <div class="form-container">
+      <div class="tab-buttons">
+        <button id="loginBtn" class="active">Log In</button>
+        <button id="signupBtn">Create Account</button>
+      </div>
+
+      <form id="authForm">
+        <div class="form-group">
+          <input id="emailInput" type="email" placeholder="Email Address" required />
+        </div>
+        <div class="form-group">
+          <input id="passwordInput" type="password" placeholder="Password" required />
+          <div class="helper">Minimum 8 chars, upper, lower, number, special.</div>
+          <div class="helper"><a href="#" id="forgotLink">Forgot password?</a></div>
+        </div>
+        <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+          <input id="confirmPasswordInput" type="password" placeholder="Confirm Password" />
+        </div>
+        <button type="submit" class="submit">Log In</button>
+        <div id="message" class="msg" role="status" aria-live="polite"></div>
+      </form>
+
+      <div class="divider">OR</div>
+
+      <div class="social-login" style="justify-content:center;">
+        <a href="register.html" style="flex:1; text-align:center; padding:0.5rem; border-radius:6px; border:1px solid #cbd5e1; text-decoration:none; color:#0f172a;">Create account manually</a>
+      </div>
+
+      <div class="signup-link">
+        Don’t have an account? <a href="#" id="toggleSignup">Sign up</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- External config (API base) -->
+  <script src="auth_config.js"></script>
+
+  <script>
+    // ====== Config ======
+  const cfg = window.ZENO_AUTH_CONFIG || {};
+  const API_BASE = cfg.API_BASE || 'http://localhost:8000';
+
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+    const submitButton = document.querySelector('.submit');
+    const toggleSignup = document.getElementById('toggleSignup');
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+    const messageEl = document.getElementById('message');
+    // Social sign-in removed
+    const forgotLink = document.getElementById('forgotLink');
+
+    // Prefill email from previous successful login/registration
+    try {
+      const storedEmail = localStorage.getItem('zeno_email');
+      if (storedEmail) emailInput.value = storedEmail;
+    } catch (e) { /* ignore */ }
+
+    function setMessage(text, type = 'error') {
+      messageEl.textContent = text || '';
+      messageEl.className = `msg ${type}`;
+    }
+
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    function isSignupMode() {
+      return signupBtn.classList.contains('active');
+    }
+
+    function validatePassword(pw) {
+      if (pw.length < 8) return 'Password must be at least 8 characters long.';
+      if (!/[A-Z]/.test(pw)) return 'Password must include at least one uppercase letter.';
+      if (!/[a-z]/.test(pw)) return 'Password must include at least one lowercase letter.';
+      if (!/\d/.test(pw)) return 'Password must include at least one number.';
+      if (!/[^A-Za-z0-9]/.test(pw)) return 'Password must include at least one special character.';
+      return '';
+    }
+
+    loginBtn.addEventListener('click', () => {
+      loginBtn.classList.add('active');
+      signupBtn.classList.remove('active');
+      confirmPasswordGroup.style.display = 'none';
+      submitButton.textContent = 'Log In';
+      setMessage('');
+    });
+
+    signupBtn.addEventListener('click', () => {
+      signupBtn.classList.add('active');
+      loginBtn.classList.remove('active');
+      confirmPasswordGroup.style.display = 'block';
+      submitButton.textContent = 'Create Account';
+      setMessage('');
+    });
+
+    toggleSignup.addEventListener('click', (e) => {
+      e.preventDefault();
+      signupBtn.click();
+    });
+
+    async function login(identifier, password) {
+      const resp = await fetch(`${API_BASE}/auth/login-json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username_or_email: identifier, password })
+      });
+      const body = await resp.json().catch(()=> ({}));
+      if (!resp.ok) {
+        // Provide specific guidance when user is not found
+        if (resp.status === 404 || (body.detail && body.detail.toLowerCase().includes('not found'))) {
+          const errMsg = 'No account found for that email/username. Please create an account.';
+          const err = new Error(errMsg);
+          err.code = 'USER_NOT_FOUND';
+          throw err;
+        }
+        throw new Error(body.detail || 'Login failed');
+      }
+      return body;
+    }
+
+    async function register(email, password) {
+      const resp = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || 'Registration failed');
+      }
+      return resp.json();
+    }
+
+    function saveTokenAndGo(token) {
+      try { localStorage.setItem('zeno_token', token); } catch {}
+      try { localStorage.setItem('zeno_email', (emailInput.value || '').trim()); } catch {}
+      // Navigate to dashboard page
+      window.location.href = 'zeno.html';
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setMessage('');
+      const email = (emailInput.value || '').trim();
+      const password = passwordInput.value || '';
+      if (!email || !password) {
+        setMessage('Please enter your email and password.');
+        return;
+      }
+      try {
+        if (isSignupMode()) {
+          const confirmPw = confirmPasswordInput.value || '';
+          if (password !== confirmPw) {
+            setMessage('Passwords do not match.');
+            return;
+          }
+          const pwErr = validatePassword(password);
+          if (pwErr) {
+            setMessage(pwErr);
+            return;
+          }
+          await register(email, password);
+          // Auto-login after successful registration
+          const { access_token } = await login(email, password);
+          saveTokenAndGo(access_token);
+        } else {
+          try {
+            const { access_token } = await login(email, password);
+            // remember email for convenience
+            try { localStorage.setItem('zeno_email', email); } catch {}
+            saveTokenAndGo(access_token);
+          } catch (err) {
+            if (err.code === 'USER_NOT_FOUND') {
+              setMessage(err.message + ' You can create one here.');
+              // show register link visually
+              // focus on create account tab
+              signupBtn.click();
+              return;
+            }
+            throw err;
+          }
+        }
+      } catch (err) {
+        console.error('Auth error:', err);
+        setMessage(err.message || 'Something went wrong.');
+      }
+    });
+
+    // ===== Forgot/Reset password (simple prompt flow for now) =====
+    forgotLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      setMessage('');
+      const email = prompt('Enter your account email to reset password:');
+      if (!email) return;
+      try {
+        const resp = await fetch(`${API_BASE}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || 'Failed to start password reset');
+        // In dev, we show the token so you can reset immediately
+        const token = data.reset_token || prompt('Check your email for reset link. If you have a reset token, paste it now:');
+        if (!token) return;
+        const newPw = prompt('Enter a new password (min 8 chars, upper, lower, number, special):');
+        if (!newPw) return;
+        const pwErr = validatePassword(newPw);
+        if (pwErr) { alert(pwErr); return; }
+        const r2 = await fetch(`${API_BASE}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, new_password: newPw })
+        });
+        const d2 = await r2.json().catch(() => ({}));
+        if (!r2.ok) throw new Error(d2.detail || 'Reset failed');
+        setMessage('Password reset successful. Please log in with your new password.', 'success');
+      } catch (err) {
+        console.error('Reset error:', err);
+        setMessage(err.message || 'Password reset failed');
+      }
+    });
+
+    // If page receives reset_token in URL, prompt user to set new password
+    (function handleResetTokenFromUrl() {
+      const token = getQueryParam('reset_token');
+      if (!token) return;
+      setTimeout(async () => {
+        try {
+          const newPw = prompt('Enter a new password (min 8 chars, upper, lower, number, special):');
+          if (!newPw) return;
+          const pwErr = validatePassword(newPw);
+          if (pwErr) { alert(pwErr); return; }
+          const r = await fetch(`${API_BASE}/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, new_password: newPw })
+          });
+          const dj = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(dj.detail || 'Reset failed');
+          setMessage('Password reset successful. Please log in with your new password.', 'success');
+          // Clear token from URL
+          history.replaceState({}, '', window.location.pathname);
+        } catch (err) {
+          console.error('URL reset error:', err);
+          setMessage(err.message || 'Password reset failed');
+        }
+      }, 100);
+    })();

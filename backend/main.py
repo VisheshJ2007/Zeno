@@ -1,3 +1,10 @@
+# backend/main.py
+import os, sys
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -5,14 +12,14 @@ from pydantic import BaseModel
 from typing import Optional, List
 from bson import ObjectId
 
-# IMPORTANT: run server from repo root so this import works:
+# IMPORTANT: run from repo root
 # python -m uvicorn backend.main:app --reload --port 8000
 from backend.database import db
-
+from backend.routers.auth import router as auth_router  # explicit submodule import
 
 app = FastAPI(title="Zeno API")
 
-# --- CORS (allow your static site / Live Server / local dev tools) ---
+# --- CORS: allow local dev (Live Server / localhost) ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -35,7 +42,6 @@ def to_public(doc: dict | None):
     doc.pop("_id", None)
     return doc
 
-
 # ---------- health + ping ----------
 @app.get("/health")
 def health():
@@ -47,9 +53,7 @@ async def db_ping():
         await db.command("ping")
         return {"mongo": "ok"}
     except Exception as e:
-        # Bubble up message to help debug Atlas IP/creds issues
         return JSONResponse(status_code=500, content={"error": str(e)})
-
 
 # ---------- models ----------
 class PlanIn(BaseModel):
@@ -60,7 +64,6 @@ class PlanIn(BaseModel):
 class PlanUpdate(BaseModel):
     topic: Optional[str] = None
     notes: Optional[str] = None
-
 
 # ---------- CRUD: plans ----------
 @app.post("/plans", response_model=dict)
@@ -105,3 +108,13 @@ async def delete_plan(plan_id: str):
     except Exception:
         raise HTTPException(400, "Invalid plan id")
     return {"deleted": res.deleted_count == 1}
+
+@app.on_event("startup")
+async def startup_indexes():
+    # ensure unique constraints for auth
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("username", unique=True)
+
+# include routers (auth, etc.)
+app.include_router(auth_router)
+
