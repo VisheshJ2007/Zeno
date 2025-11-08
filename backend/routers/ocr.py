@@ -7,17 +7,17 @@ import logging
 import uuid
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from backend.models.transcription import (
+from ..models.transcription import (
     TranscriptionRequest,
     TranscriptionResponse,
     ErrorResponse,
     create_mongodb_document
 )
-from backend.database.mongodb import get_mongo_manager
-from backend.database.operations import (
+from ..database.mongodb import get_mongo_manager  # type: ignore[reportMissingImports]
+from ..database.operations import (  # type: ignore[reportMissingImports]
     insert_transcription,
     get_transcription_by_id,
     get_user_transcriptions,
@@ -27,6 +27,8 @@ from backend.database.operations import (
     delete_transcription,
     create_indexes
 )
+import asyncio
+from ..utils.llm import summarize_text  # type: ignore[reportMissingImports]
 from pymongo.errors import DuplicateKeyError, PyMongoError
 
 # Configure logging
@@ -48,7 +50,7 @@ router = APIRouter(prefix="/api/ocr", tags=["OCR Transcription"])
     summary="Submit OCR transcription",
     description="Process and store OCR transcription data in MongoDB"
 )
-async def transcribe_document(request: TranscriptionRequest) -> TranscriptionResponse:
+async def transcribe_document(request: TranscriptionRequest, background_tasks: BackgroundTasks) -> TranscriptionResponse:
     """
     Process and store OCR transcription
 
@@ -90,6 +92,12 @@ async def transcribe_document(request: TranscriptionRequest) -> TranscriptionRes
         # Insert into MongoDB
         await insert_transcription(collection, document)
 
+        # Kick off background summarization job (non-blocking)
+        try:
+            background_tasks.add_task(summarize_and_update, transcription_id, request.ocr_data.cleaned_text)
+        except Exception as e:
+            logger.error(f"Failed to schedule summarization for {transcription_id}: {e}")
+
         # Create response
         response = TranscriptionResponse(
             success=True,
@@ -129,6 +137,36 @@ async def transcribe_document(request: TranscriptionRequest) -> TranscriptionRes
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+async def summarize_and_update(transcription_id: str, text: str) -> None:
+    """Background task: summarize text using LLM and update MongoDB document."""
+    logger.info(f"Starting summarization background task for {transcription_id}")
+    mongo_manager = get_mongo_manager()
+    collection = mongo_manager.collection
+
+    try:
+        # Run the potentially blocking LLM call in a thread
+        result = await asyncio.to_thread(summarize_text, text)
+
+        summary = result.get("summary", "")
+        key_topics = result.get("key_topics", [])
+
+        update_doc = {
+            "content.summary": summary,
+            "content.key_topics": key_topics,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+
+        await collection.update_one({"transcription_id": transcription_id}, {"$set": update_doc})
+        logger.info(f"Summarization saved for {transcription_id}")
+
+    except Exception as e:
+        logger.exception(f"LLM summarization failed for {transcription_id}: {e}")
+        try:
+            await collection.update_one({"transcription_id": transcription_id}, {"$set": {"summary_error": str(e), "updated_at": datetime.utcnow().isoformat()}})
+        except Exception:
+            logger.exception(f"Failed to record summarization error for {transcription_id}")
 
 
 # ============================================================================
