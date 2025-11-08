@@ -1,27 +1,35 @@
-# --- core api stack ---
-fastapi==0.110.0
-uvicorn[standard]==0.29.0
-pydantic==2.6.4
-pydantic-settings==2.2.1
-starlette==0.36.3
+# --- Core Framework ---
+fastapi>=0.112.0
+uvicorn[standard]>=0.27.0
 
-# --- mongo/motor ---
-motor==3.3.2
-pymongo==4.6.1
+# --- Database ---
+motor==3.3.1         # Async MongoDB driver
+pymongo==4.6.0
 
-# --- env & utils ---
-python-dotenv==1.0.1
-httpx==0.27.0
+# --- Environment / Settings ---
+python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
 
-# --- auth/crypto/email/2fa ---
+# --- Auth & Security ---
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
-authlib==1.3.1
-fastapi-mail==1.4.1
-pyotp==2.9.0
+email-validator==2.1.0.post1
+python-multipart==0.0.9
+itsdangerous==2.1.2
 
-# --- testing (optional) ---
+# --- HTTP Client (optional, for external APIs like Google OAuth) ---
+httpx==0.25.2
+
+# --- Testing Tools ---
 pytest==7.4.3
 pytest-asyncio==0.21.1
+
+# --- Optional Utilities ---
+aiofiles>=23.2.1
+requests
+
+
+
 
 

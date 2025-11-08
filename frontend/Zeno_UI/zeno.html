@@ -144,7 +144,12 @@
   </div>
 
   <script>
-    const API = "http://127.0.0.1:8000";
+    // Auth gate: redirect to login if missing token
+    const API = (window.ZENO_AUTH_CONFIG && window.ZENO_AUTH_CONFIG.API_BASE) || "http://localhost:8000";
+    const token = localStorage.getItem('zeno_token');
+    if (!token) {
+      window.location.href = 'zeno_login.html';
+    }
 
     function setStatus(ok) {
       const dot = document.getElementById("statusDot");
@@ -164,12 +169,23 @@
     }
 
     async function api(path, opts = {}) {
-      const res = await fetch(`${API}${path}`, {
-        headers: { "Content-Type": "application/json" },
-        ...opts,
-      });
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API}${path}`, { headers, ...opts });
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
       return res.json();
+    }
+
+    async function loadProfile() {
+      try {
+        const me = await api('/auth/me');
+        const profileEl = document.querySelector('aside div div p.font-semibold');
+        if (profileEl) profileEl.textContent = me.username || me.email;
+        const handleEl = document.querySelector('aside div div p.text-xs');
+        if (handleEl) handleEl.textContent = '@' + (me.username || me.email.split('@')[0]);
+      } catch (e) {
+        console.warn('Failed to load profile:', e);
+      }
     }
 
     const planForm = document.getElementById("planForm");
@@ -243,6 +259,7 @@
     }
 
     ping();
+    loadProfile();
     loadPlans();
   </script>
 </body>

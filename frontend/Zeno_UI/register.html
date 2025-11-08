@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account</title>
+  <style>
+    body{font-family:Inter, system-ui, Arial; display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f1f5f9}
+    .card{background:white;padding:2rem;border-radius:8px;box-shadow:0 6px 24px rgba(16,24,40,0.08);width:360px}
+    input{width:100%;padding:0.75rem;margin-top:0.5rem;border-radius:6px;border:1px solid #e5e7eb}
+    .btn{background:#0f172a;color:white;padding:0.75rem;border-radius:8px;border:none;width:100%;cursor:pointer;margin-top:1rem}
+    .msg{margin-top:0.75rem;font-size:0.9rem}
+    .msg.error{color:#b91c1c}
+    .msg.success{color:#065f46}
+    a{color:#0f172a}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Create an account</h2>
+    <form id="regForm">
+      <label>Email</label>
+      <input id="email" type="email" required />
+      <label>Password</label>
+      <input id="password" type="password" required />
+      <label>Confirm Password</label>
+      <input id="confirm" type="password" required />
+      <button class="btn" type="submit">Create Account</button>
+      <div id="msg" class="msg"></div>
+    </form>
+    <p style="margin-top:1rem">Already have an account? <a href="zeno_login.html">Log in</a></p>
+  </div>
+
+  <script src="auth_config.js"></script>
+  <script>
+    const cfg = window.ZENO_AUTH_CONFIG || {};
+    const API_BASE = cfg.API_BASE || 'http://localhost:8000';
+    const form = document.getElementById('regForm');
+    const msg = document.getElementById('msg');
+    function setMsg(t, type='error'){ msg.textContent = t || ''; msg.className = 'msg ' + (type||''); }
+    function validatePassword(pw){ if(pw.length<8) return 'Password must be at least 8 characters.'; if(!/[A-Z]/.test(pw)) return 'Add an uppercase letter.'; if(!/[a-z]/.test(pw)) return 'Add a lowercase letter.'; if(!/\d/.test(pw)) return 'Add a number.'; if(!/[^A-Za-z0-9]/.test(pw)) return 'Add a special character.'; return ''; }
+    async function api(path, opts){ const res = await fetch(API_BASE + path, opts); const json = await res.json().catch(()=>({})); if(!res.ok) throw new Error(json.detail || json.error || 'Request failed'); return json; }
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault(); setMsg('');
+      const email = document.getElementById('email').value.trim();
+      const pw = document.getElementById('password').value;
+      const conf = document.getElementById('confirm').value;
+      if(pw !== conf){ setMsg('Passwords do not match'); return; }
+      const v = validatePassword(pw); if(v){ setMsg(v); return; }
+      try{
+        await api('/auth/register', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, password: pw }) });
+        // auto-login
+        const tokenResp = await api('/auth/login-json', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username_or_email: email, password: pw }) });
+        try{ localStorage.setItem('zeno_token', tokenResp.access_token); localStorage.setItem('zeno_email', email); }catch(e){}
+        setMsg('Account created — redirecting...', 'success');
+        setTimeout(()=> window.location.href = 'zeno.html', 800);
+      }catch(err){ console.error(err); setMsg(err.message || 'Failed'); }
+    });
+  </script>
+</body>
+</html>
