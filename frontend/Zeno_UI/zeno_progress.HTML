@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Zeno — Progress</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		:root{ --navy:#0B1736; --panel:#F4F6FA; }
+		body{ font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: linear-gradient(90deg,#dff7ea 0%,#d6f0ff 50%,#d6e7ff 100%); color:#0b1736; }
+		.container{ display:flex; min-height:100vh; }
+		aside{ width:64; width:16rem; background:var(--navy); color:white; display:flex; flex-direction:column; justify-content:space-between; padding:1rem; }
+		main{ flex:1; padding:2rem; }
+		.panel{ background:linear-gradient(180deg,#f8fafc,#f1f5f9); border:4px solid var(--navy); border-radius:1rem; padding:1.25rem; max-width:920px; margin:0 auto 1.25rem; }
+
+		/* Level card */
+		.level-card{ display:flex; flex-direction:column; gap:0.75rem; align-items:flex-start; }
+		.level-track{ width:100%; background:#e6e6ea; height:42px; border-radius:999px; position:relative; display:flex; align-items:center; padding:0 12px; }
+		.level-progress{ height:26px; background:var(--navy); border-radius:999px; width:40%; margin-left:8px; }
+		.level-labels{ display:flex; justify-content:space-between; width:100%; margin-top:6px; }
+		.level-dot{ width:48px; height:48px; border-radius:999px; background:var(--navy); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; }
+
+		.xp-row{ display:flex; align-items:center; justify-content:space-between; width:100%; margin-top:6px; }
+		.streak{ display:flex; align-items:center; gap:8px; }
+		.streak .fire{ width:46px; height:46px; /* slightly muted orange */ background:linear-gradient(180deg,#ff8a00,#ff6a00); border-radius:12px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; box-shadow:0 6px 12px rgba(255,90,0,0.12); }
+
+		/* Summary + badges */
+		.section{ margin-top:1.25rem; }
+		.section .title{ display:inline-block; background:white; padding:8px 14px; border-radius:10px; border:2px solid var(--navy); margin-bottom:10px; }
+
+		.report-box{ border:4px solid var(--navy); border-radius:12px; background:var(--panel); padding:18px; max-height:160px; overflow:auto; }
+		.report-item{ display:flex; align-items:center; gap:12px; padding:10px 6px; border-bottom:1px dashed rgba(11,23,54,0.06); }
+		.report-item:last-child{ border-bottom:none; }
+		.report-item .dot{ width:28px; height:28px; border-radius:999px; display:flex; align-items:center; justify-content:center; }
+		.report-item .link{ text-decoration:underline; color:var(--navy); cursor:pointer; }
+
+		.badges-box{ border:4px solid var(--navy); border-radius:12px; background:var(--panel); padding:18px; max-height:160px; overflow:auto; display:flex; gap:12px; flex-wrap:wrap; }
+		.badge{ width:120px; height:100px; background:white; border-radius:10px; display:flex; align-items:center; justify-content:center; border:2px solid rgba(11,23,54,0.06); }
+
+		/* small screens */
+		@media (max-width:900px){ aside{ display:none } .panel{ margin:8px } }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<aside>
+			<div>
+				<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+					<div style="width:44px;height:44px;background:#24314a;border-radius:8px"></div>
+					<div>
+						<div style="font-weight:700">Juliana Silva</div>
+						<div style="font-size:12px;opacity:.8">@julianasilva</div>
+					</div>
+				</div>
+				<nav style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+					<a href="#" style="padding:8px;border-radius:8px;color:inherit;text-decoration:none;">Dashboard</a>
+					<a href="#" style="padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);color:inherit;text-decoration:none">Progress</a>
+					<a href="#" style="padding:8px;border-radius:8px;color:inherit;text-decoration:none">Practice</a>
+				</nav>
+			</div>
+			<div style="font-size:13px;opacity:.8">&copy; Zeno</div>
+		</aside>
+
+		<main>
+			<div style="display:flex;justify-content:center;margin-bottom:8px"><h1 style="background:var(--navy);color:white;padding:12px 28px;border-radius:8px;font-size:28px">Progress</h1></div>
+
+			<div class="panel level-card">
+				<div style="font-weight:700;">LEVEL</div>
+						<div class="level-track" aria-hidden>
+							<div class="level-progress" style="width:25%; height:85%"></div>
+							<div style="position:absolute; left:20px; top:50%; transform:translate(-50%,-50%);" class="level-dot">0</div>
+							<div style="position:absolute; left:calc(100% - 20px); top:50%; transform:translate(-50%,-50%);" class="level-dot">1</div>
+						</div>
+
+				<div class="xp-row">
+					<div style="font-size:22px;font-weight:600">TOTAL XP: ###</div>
+					<div class="streak">
+						<div style="text-align:right"><small style="font-size:11px;color:#10253b;font-weight:600">5-DAY STREAK</small></div>
+						<div class="fire" title="Streak">🔥</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel section">
+				<div class="title">SUMMARY REPORTS</div>
+				<div class="report-box" id="reportBox">
+					<div class="report-item">
+						<div class="dot" style="background:#16a34a;color:white">✓</div>
+						<div><a class="link" data-id="calc">Calculus - 21/21 skills mastered</a></div>
+					</div>
+					<div class="report-item">
+						<div class="dot" style="background:#f59e0b;color:white">!</div>
+						<div><a class="link" data-id="eng">English - 16/19 skills mastered</a></div>
+					</div>
+					<div class="report-item">
+						<div class="dot" style="background:#f59e0b;color:white">!</div>
+						<div><a class="link" data-id="chem">Chemistry - 12/21 skills mastered</a></div>
+					</div>
+					<div class="report-item">
+						<div class="dot" style="background:#f59e0b;color:white">i</div>
+						<div><a class="link" data-id="bio">Biology - 8/15 skills mastered</a></div>
+					</div>
+					<div class="report-item">
+						<div class="dot" style="background:#f59e0b;color:white">i</div>
+						<div><a class="link" data-id="hist">History - 11/13 skills mastered</a></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel section">
+				<div class="title">BADGES</div>
+				<div class="badges-box" id="badgesBox">
+					<div class="badge">Badge 1</div>
+					<div class="badge">Badge 2</div>
+					<div class="badge">Badge 3</div>
+					<div class="badge">Badge 4</div>
+					<div class="badge">Badge 5</div>
+					<div class="badge">Badge 6</div>
+				</div>
+			</div>
+
+		</main>
+	</div>
+
+	<script>
+		// Make report links clickable and show details placeholder
+		document.querySelectorAll('.report-box .link').forEach(a => {
+			a.addEventListener('click', (e) => {
+				const id = a.dataset.id;
+				// placeholder behavior: show modal-like alert or console
+				alert('Open report for ' + a.textContent);
+			});
+		});
+
+		// Example: make report and badges scrollable (CSS already sets overflow:auto)
+		// Ensure fire/streak is visually prominent on page load
+		const fire = document.querySelector('.fire');
+		if(fire){ fire.style.transform = 'scale(1.05)'; }
+	</script>
+</body>
+</html>
+
