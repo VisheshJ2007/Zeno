@@ -1,4 +1,3 @@
-# backend/main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -6,25 +5,36 @@ from pydantic import BaseModel
 from typing import Optional, List
 from bson import ObjectId
 
-# IMPORTANT: import using the package name because we run "uvicorn backend.main:app"
+# IMPORTANT: run server from repo root so this import works:
+# python -m uvicorn backend.main:app --reload --port 8000
 from backend.database import db
+
 
 app = FastAPI(title="Zeno API")
 
+# --- CORS (allow your static site / Live Server / local dev tools) ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ---------- helpers ----------
+# ---------- small helpers ----------
 def to_public(doc: dict | None):
+    """Convert Mongo _id to string id and remove private fields."""
     if not doc:
         return None
     doc["id"] = str(doc["_id"])
     doc.pop("_id", None)
     return doc
+
 
 # ---------- health + ping ----------
 @app.get("/health")
@@ -37,7 +47,9 @@ async def db_ping():
         await db.command("ping")
         return {"mongo": "ok"}
     except Exception as e:
+        # Bubble up message to help debug Atlas IP/creds issues
         return JSONResponse(status_code=500, content={"error": str(e)})
+
 
 # ---------- models ----------
 class PlanIn(BaseModel):
@@ -49,7 +61,8 @@ class PlanUpdate(BaseModel):
     topic: Optional[str] = None
     notes: Optional[str] = None
 
-# ---------- CRUD ----------
+
+# ---------- CRUD: plans ----------
 @app.post("/plans", response_model=dict)
 async def create_plan(plan: PlanIn):
     payload = plan.model_dump()
@@ -59,8 +72,8 @@ async def create_plan(plan: PlanIn):
 
 @app.get("/plans", response_model=List[dict])
 async def list_plans(user: Optional[str] = None):
-    q = {"user": user} if user else {}
-    cursor = db.plans.find(q).sort([("_id", -1)]).limit(100)
+    query = {"user": user} if user else {}
+    cursor = db.plans.find(query).sort([("_id", -1)]).limit(100)
     return [to_public(d) async for d in cursor]
 
 @app.get("/plans/{plan_id}", response_model=dict)
@@ -92,4 +105,3 @@ async def delete_plan(plan_id: str):
     except Exception:
         raise HTTPException(400, "Invalid plan id")
     return {"deleted": res.deleted_count == 1}
-

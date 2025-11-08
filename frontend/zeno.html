@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#E7F4FF] font-sans">
+  <div class="flex min-h-screen">
+
+
+    <aside class="w-64 bg-[#0B1736] text-white flex flex-col justify-between">
+      <div>
+     
+        <div class="flex items-center space-x-3 p-4 border-b border-gray-700">
+          <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+          <div>
+            <p class="font-semibold text-sm">Juliana Silva</p>
+            <p class="text-xs text-gray-400">@julianasilva</p>
+          </div>
+        </div>
+
+        
+        <nav class="flex flex-col space-y-1 mt-4 px-3">
+          <a href="#" class="flex items-center space-x-3 bg-[#1C2A4A] px-3 py-2 rounded-lg">
+            <div class="w-5 h-5 bg-gray-500 rounded"></div>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <div class="w-5 h-5 bg-gray-500 rounded"></div>
+            <span>Sessions</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <div class="w-5 h-5 bg-gray-500 rounded"></div>
+            <span>Progress</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <div class="w-5 h-5 bg-gray-500 rounded"></div>
+            <span>Practice</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <div class="w-5 h-5 bg-gray-500 rounded"></div>
+            <span>Review</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <div class="w-5 h-5 bg-gray-500 rounded"></div>
+            <span>User</span>
+          </a>
+        </nav>
+      </div>
+
+      
+      <div class="p-4 space-y-2 text-sm text-gray-300 border-t border-gray-700">
+        <a href="#" class="block hover:text-white">⚙️ Setting</a>
+        <a href="#" class="block hover:text-white">🚪 Log Out</a>
+      </div>
+    </aside>
+
+   
+    <main class="flex-1 p-6">
+    
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-2 sm:space-y-0">
+        <h1 class="text-xl font-semibold text-gray-800">Study Dashboard</h1>
+        <div class="flex items-center space-x-3">
+          <input type="text" placeholder="Search..." class="px-3 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+          <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">Z</div>
+        </div>
+      </div>
+
+      
+      <div class="flex space-x-3 mb-6">
+        <button class="px-4 py-2 bg-[#0B1736] text-white rounded-full">All Sales</button>
+        <button class="px-4 py-2 bg-white border rounded-full text-gray-700">Pending</button>
+        <button class="px-4 py-2 bg-white border rounded-full text-gray-700">Completed</button>
+      </div>
+
+     
+      <div class="bg-white p-6 rounded-2xl shadow mb-6">
+        <h2 class="font-semibold text-gray-700 mb-4">Progress</h2>
+        <div class="flex items-center space-x-4">
+          <span id="currentValue" class="w-10 h-10 flex items-center justify-center bg-[#0B1736] text-white rounded-full">18</span>
+          <div class="flex-1 bg-gray-200 rounded-full h-4 relative">
+            <div id="progressBar" class="bg-[#0B1736] h-4 rounded-full transition-all duration-500" style="width: 94%;"></div>
+          </div>
+          <span id="goalValue" class="w-10 h-10 flex items-center justify-center bg-[#0B1736] text-white rounded-full">19</span>
+        </div>
+      </div>
+
+     
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white h-32 rounded-2xl shadow"></div>
+        <div class="bg-white h-32 rounded-2xl shadow"></div>
+        <div class="bg-white h-32 rounded-2xl shadow"></div>
+        <div class="bg-white h-32 rounded-2xl shadow"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+ 
+    const currentValue = 18;
+    const goalValue = 19;
+    const progressBar = document.getElementById("progressBar");
+    const width = (currentValue / goalValue) * 100;
+    progressBar.style.width = width + "%";
+  </script>
+  <script>
+          const API = "http://127.0.0.1:8000";
+
+  // ----- health/db status dot (optional UI)
+  function setStatus(ok) {
+    let dot = document.getElementById("statusDot");
+    if (!dot) {
+      const z = document.querySelector("h1") || document.body;
+      dot = document.createElement("span");
+      dot.id = "statusDot";
+      dot.className = "ml-2 inline-block w-2.5 h-2.5 rounded-full";
+      z.appendChild(dot);
+    }
+    dot.className = "ml-2 inline-block w-2.5 h-2.5 rounded-full " + (ok ? "bg-green-500" : "bg-red-500");
+  }
+
+  async function ping() {
+    try {
+      const h = await fetch(`${API}/health`).then(r => r.json());
+      const d = await fetch(`${API}/db-ping`).then(r => r.json());
+      console.log("health:", h, "db:", d);
+      setStatus(true);
+    } catch (e) {
+      console.error("Backend not reachable:", e);
+      setStatus(false);
+      alert("Can't reach backend on :8000 — is it running?");
+    }
+  }
+
+  // ----- tiny API helper
+  async function api(path, opts = {}) {
+    const res = await fetch(`${API}${path}`, {
+      headers: {"Content-Type":"application/json"},
+      ...opts,
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
+    return res.json();
+  }
+
+  // ----- simple plan form + list (add these containers to your HTML if you want a nicer layout)
+  // Create form (topic + notes) and a list container if they don't exist yet
+  function ensureContainers() {
+    if (!document.getElementById("planForm")) {
+      const main = document.querySelector("main") || document.body;
+      const create = document.createElement("div");
+      create.className = "bg-white p-6 rounded-2xl shadow mb-6";
+      create.innerHTML = `
+        <h2 class="font-semibold text-gray-700 mb-3">Create Study Plan</h2>
+        <form id="planForm" class="flex flex-col sm:flex-row gap-3">
+          <input id="topic" class="border rounded px-3 py-2 flex-1" placeholder="Topic (e.g., Derivatives)" required>
+          <input id="notes" class="border rounded px-3 py-2 flex-1" placeholder="Notes (optional)">
+          <button class="bg-[#0B1736] text-white px-4 py-2 rounded">Add</button>
+        </form>
+        <p id="planMsg" class="text-sm text-gray-500 mt-2"></p>`;
+      main.prepend(create);
+    }
+    if (!document.getElementById("plansList")) {
+      const main = document.querySelector("main") || document.body;
+      const list = document.createElement("div");
+      list.className = "bg-white p-6 rounded-2xl shadow mb-6";
+      list.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold text-gray-700">Your Plans</h2>
+          <button id="refreshBtn" class="px-3 py-1 text-sm bg-gray-100 border rounded">Refresh</button>
+        </div>
+        <ul id="plansList" class="space-y-3"></ul>`;
+      main.appendChild(list);
+    }
+  }
+
+  ensureContainers();
+
+  const planForm  = document.getElementById("planForm");
+  const planMsg   = document.getElementById("planMsg");
+  const plansList = document.getElementById("plansList");
+
+  planForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    planMsg.textContent = "Saving…";
+    try {
+      const payload = {
+        topic: document.getElementById("topic").value.trim(),
+        notes: document.getElementById("notes").value || null,
+      };
+      await api("/plans", { method: "POST", body: JSON.stringify(payload) });
+      planMsg.textContent = "Saved ✔";
+      planForm.reset();
+      loadPlans();
+    } catch (err) {
+      planMsg.textContent = "Error: " + err.message;
+    }
+  });
+
+  async function loadPlans() {
+    plansList.innerHTML = "<li class='text-gray-500'>Loading…</li>";
+    try {
+      const data = await api("/plans");
+      if (!data.length) { plansList.innerHTML = "<li class='text-gray-500'>No plans yet.</li>"; return; }
+      plansList.innerHTML = "";
+      for (const p of data) {
+        const li = document.createElement("li");
+        li.className = "border rounded-xl p-4 flex items-start justify-between";
+        li.innerHTML = `
+          <div>
+            <div class="font-semibold text-gray-800">${escapeHtml(p.topic)}</div>
+            <div class="text-sm text-gray-600">${escapeHtml(p.notes || "")}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="text-sm px-3 py-1 rounded bg-gray-100 border" data-edit="${p.id}">Edit</button>
+            <button class="text-sm px-3 py-1 rounded bg-red-600 text-white" data-del="${p.id}">Delete</button>
+          </div>`;
+        plansList.appendChild(li);
+      }
+    } catch (err) {
+      plansList.innerHTML = `<li class='text-red-600 text-sm'>${err.message}</li>`;
+    }
+  }
+
+  plansList.addEventListener("click", async (e) => {
+    const idDel  = e.target.getAttribute("data-del");
+    const idEdit = e.target.getAttribute("data-edit");
+    if (idDel) {
+      if (!confirm("Delete this plan?")) return;
+      await api(`/plans/${idDel}`, { method: "DELETE" });
+      loadPlans();
+    }
+    if (idEdit) {
+      const newNotes = prompt("Update notes:");
+      if (newNotes != null) {
+        await api(`/plans/${idEdit}`, { method: "PATCH", body: JSON.stringify({ notes: newNotes }) });
+        loadPlans();
+      }
+    }
+  });
+
+  function escapeHtml(s) { return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+
+  // initial boot
+  ping();
+  loadPlans();
+  </script>
+</body>
+</html>
