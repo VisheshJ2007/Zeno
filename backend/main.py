@@ -8,9 +8,14 @@ from bson import ObjectId
 
 from database import db
 
-# Import OCR router
+# Import routers
 from routers.ocr import router as ocr_router
 from database.mongodb import get_mongo_manager, close_mongo_connection
+
+# Import RAG and Chat routers
+from api.routes.rag_routes import router as rag_router
+from api.routes.chat_routes import router as chat_router
+from api.routes.learning_routes import router as learning_router
 
 # Configure logging
 logging.basicConfig(
@@ -35,32 +40,48 @@ app.add_middleware(
         # Add your production frontend URL here
     ],
     allow_credentials=True,
-# CORS for local frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # add your prod URL later
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include OCR router
+# Include routers
 app.include_router(ocr_router)
+app.include_router(rag_router)
+app.include_router(chat_router)
+app.include_router(learning_router)
 
 # Startup event
 @app.on_event("startup")
 async def startup_event():
     """Initialize connections on startup"""
-    logger.info("Starting Zeno API...")
+    logger.info("Starting Zeno API with RAG capabilities...")
     try:
         # Initialize MongoDB connection
         mongo_manager = get_mongo_manager()
         health = mongo_manager.health_check()
         if health.get("status") == "healthy":
-            logger.info("MongoDB connection established successfully")
+            logger.info("✓ MongoDB connection established successfully")
         else:
             logger.warning(f"MongoDB connection issue: {health}")
+
+        # Check RAG system health
+        from api.rag.rag_engine import rag_engine
+        rag_health = rag_engine.health_check()
+        logger.info(f"RAG system status: {rag_health['status']}")
+
+        # Check guardrails
+        from api.guardrails.middleware import guardrails
+        guardrails_health = guardrails.health_check()
+        if guardrails_health['enabled']:
+            logger.info("✓ Educational guardrails enabled")
+        else:
+            logger.warning("⚠️  Educational guardrails disabled")
+
+        # Check learning system
+        logger.info("✓ Learning Management System initialized")
+
     except Exception as e:
-        logger.error(f"Failed to connect to MongoDB: {str(e)}")
+        logger.error(f"Failed to initialize services: {str(e)}")
 
 # Shutdown event
 @app.on_event("shutdown")

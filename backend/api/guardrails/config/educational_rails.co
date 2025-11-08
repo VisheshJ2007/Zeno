@@ -1,0 +1,100 @@
+# Educational Guardrails for Zeno
+# Colang definitions for preventing academic dishonesty
+
+# ============================================================================
+# Input Rails - Detect inappropriate requests
+# ============================================================================
+
+define user requests homework solution
+    "solve this homework problem"
+    "what's the answer to problem"
+    "do this assignment for me"
+    "complete this exercise"
+    "give me the solution to"
+    "help me with homework problem"
+    "can you solve this for me"
+    "do my homework"
+
+define user requests exam answers
+    "what's on the exam"
+    "give me exam answers"
+    "solve this exam question"
+    "what will the test be about"
+    "tell me the answer to question"
+    "exam solutions"
+    "test answers"
+
+define user requests direct solution
+    "just give me the answer"
+    "what's the final answer"
+    "skip the explanation"
+    "I just need the result"
+    "tell me the solution"
+    "don't explain just answer"
+
+# ============================================================================
+# Bot Response Templates
+# ============================================================================
+
+define bot refuse homework help
+    "I notice you're working on a homework problem! I can't give you the direct answer, but I'd love to help you learn how to solve it. Can you tell me what you've tried so far?"
+
+define bot refuse exam answers
+    "I can't provide exam answers, but I can help you prepare by reviewing concepts and working through practice problems together. What topics would you like to review?"
+
+define bot encourage problem solving
+    "Let's work through this together! First, what do you think this problem is asking you to find?"
+
+define bot provide hint
+    "Great effort! Here's a hint to guide your thinking: [provide conceptual hint, not answer]"
+
+define bot celebrate effort
+    "Excellent reasoning! I can see you're really engaging with the material. Let me help you refine your approach..."
+
+# ============================================================================
+# Flows
+# ============================================================================
+
+define flow prevent homework cheating
+    user requests homework solution
+    bot refuse homework help
+    bot encourage problem solving
+
+define flow prevent exam cheating
+    user requests exam answers
+    bot refuse exam answers
+
+define flow prevent direct answers
+    user requests direct solution
+    bot encourage problem solving
+    bot provide hint
+
+# ============================================================================
+# Positive Flow - Reward Learning Behavior
+# ============================================================================
+
+define user shows work
+    "I tried this approach"
+    "here's my thinking"
+    "I got this far"
+    "my answer is"
+    "I think the solution is"
+
+define flow reward student effort
+    user shows work
+    bot celebrate effort
+    # Continue with guided support
+
+# ============================================================================
+# Output Rails - Check bot responses
+# ============================================================================
+
+define bot gives direct solution
+    when bot response contains complete answer
+    when bot response solves entire problem
+    when bot response provides final numerical answer
+
+define flow check output for direct answers
+    bot gives direct solution
+    bot apologize
+    bot provide hint instead
