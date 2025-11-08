@@ -7,7 +7,7 @@ import logging
 import uuid
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from backend.models.transcription import (
@@ -29,6 +29,9 @@ from backend.database.operations import (
 )
 from pymongo.errors import DuplicateKeyError, PyMongoError
 
+# Import RAG integration for automatic processing
+from backend.api.rag.ocr_integration import process_ocr_output_for_rag
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,9 +49,12 @@ router = APIRouter(prefix="/api/ocr", tags=["OCR Transcription"])
     response_model=TranscriptionResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Submit OCR transcription",
-    description="Process and store OCR transcription data in MongoDB"
+    description="Process and store OCR transcription data in MongoDB and trigger RAG processing"
 )
-async def transcribe_document(request: TranscriptionRequest) -> TranscriptionResponse:
+async def transcribe_document(
+    request: TranscriptionRequest,
+    background_tasks: BackgroundTasks
+) -> TranscriptionResponse:
     """
     Process and store OCR transcription
 
@@ -90,11 +96,49 @@ async def transcribe_document(request: TranscriptionRequest) -> TranscriptionRes
         # Insert into MongoDB
         await insert_transcription(collection, document)
 
+        # Trigger RAG processing in background
+        try:
+            # Extract text for RAG processing
+            ocr_text = request.structured_content.full_text or request.ocr_data.cleaned_text
+
+            # Get document type
+            doc_type = request.structured_content.document_type or "lecture_notes"
+
+            # Generate course_id from user_id
+            course_id = f"user_{request.user_id}_course"
+
+            logger.info(f"Queueing RAG processing for transcription {transcription_id}")
+
+            # Process document for RAG (chunking, embeddings, storage)
+            await process_ocr_output_for_rag(
+                ocr_text=ocr_text,
+                course_id=course_id,
+                doc_type=doc_type,
+                source_file=request.filename,
+                metadata={
+                    "transcription_id": transcription_id,
+                    "user_id": request.user_id,
+                    "document_type": doc_type,
+                    "word_count": request.structured_content.word_count,
+                    "detected_subject": request.structured_content.detected_subject,
+                    "has_formulas": request.structured_content.has_formulas,
+                    "upload_timestamp": request.file_metadata.upload_timestamp
+                },
+                background_tasks=background_tasks
+            )
+
+            logger.info(f"RAG processing queued successfully for {transcription_id}")
+
+        except Exception as rag_error:
+            # Log error but don't fail the transcription
+            logger.error(f"RAG processing failed for {transcription_id}: {str(rag_error)}")
+            logger.warning("Transcription saved but RAG processing unavailable")
+
         # Create response
         response = TranscriptionResponse(
             success=True,
             transcription_id=transcription_id,
-            message="Transcription processed successfully",
+            message="Transcription processed successfully and queued for RAG processing",
             created_at=datetime.utcnow().isoformat()
         )
 
