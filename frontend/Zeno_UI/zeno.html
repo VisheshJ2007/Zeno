@@ -275,18 +275,38 @@
 
     planForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const submitBtn = planForm.querySelector('button');
+      if (submitBtn) submitBtn.disabled = true;
       planMsg.textContent = "Saving…";
       try {
         const payload = {
           topic: document.getElementById("topic").value.trim(),
           notes: document.getElementById("notes").value || null,
         };
-        await api("/plans", { method: "POST", body: JSON.stringify(payload) });
+
+        // POST and capture returned created plan
+        const created = await api("/plans", { method: "POST", body: JSON.stringify(payload) });
+
+        // Show confirmation and refresh list
         planMsg.textContent = "Saved ✔";
         planForm.reset();
-        loadPlans();
+        await loadPlans();
+
+        // Briefly highlight saved plan (if returned with id)
+        if (created && created.id) {
+          planMsg.textContent = `Saved ✔ (id: ${created.id})`;
+        }
+
       } catch (err) {
-        planMsg.textContent = "Error: " + err.message;
+        console.error('Plan save failed', err);
+        // Try to show server error message if available
+        planMsg.textContent = err.message ? `Error: ${err.message}` : 'Error saving plan';
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        // Clear message after a short delay
+        setTimeout(() => {
+          planMsg.textContent = '';
+        }, 2500);
       }
     });
 
