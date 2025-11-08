@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Zeno — Sessions</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		/* Small custom styles to match the provided design */
+		:root{
+			--navy: #0B1736;
+			--panel-bg: #F4F6FA;
+			--accent: #0B1736;
+		}
+
+		body{ /* blue-greenish gradient like the image */
+			background: linear-gradient(90deg, #dff7ea 0%, #d6f0ff 50%, #d6e7ff 100%);
+		}
+
+		.tech-btn{
+			width: 120px;
+			height: 120px;
+			border-radius: 9999px;
+			display:flex;
+			align-items:center;
+			justify-content:center;
+			border: 10px solid rgba(11,23,54,0.95);
+			background: transparent;
+			color: var(--navy);
+			cursor: pointer;
+			transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+		}
+
+		.tech-btn.active{
+			background: linear-gradient(180deg, rgba(11,23,54,0.95), rgba(11,23,54,0.95));
+			color: white;
+			transform: translateY(-6px);
+			box-shadow: 0 8px 18px rgba(11,23,54,0.18);
+		}
+
+		.practice-card{
+			width: 110px;
+			height: 110px;
+			border-radius: 12px;
+			background: var(--navy);
+			color: white;
+			display:flex;
+			align-items:center;
+			justify-content:center;
+			flex-direction:column;
+			cursor:pointer;
+			transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+		}
+
+		.practice-card.inactive{
+			opacity: .45;
+			transform: scale(.98);
+		}
+
+		.panel{
+			max-width: 920px;
+			margin: 32px auto;
+			background: linear-gradient(180deg,#f8fafc,#f1f5f9);
+			border-radius: 24px;
+			padding: 32px;
+			border: 4px solid #0B1736;
+		}
+
+		.field-input{
+			border: 2px solid #0B1736; border-radius: 12px; padding: 10px 14px; width: 300px; background: white;
+		}
+
+		.field-input.invalid{ box-shadow: 0 0 0 3px rgba(255,0,0,0.06); border-color: #dc2626; }
+
+		/* Responsive tweaks */
+		@media (max-width: 850px){
+			.tech-row{flex-wrap:wrap; gap:18px}
+			.tech-btn{width:100px;height:100px}
+			.practice-card{width:90px;height:90px}
+			.panel{padding:20px}
+		}
+	</style>
+</head>
+<body class="font-sans text-gray-800">
+	<div class="flex min-h-screen">
+		<!-- Sidebar (match theme from zeno.HTML) -->
+		<aside class="w-64 bg-[var(--navy)] text-white flex flex-col justify-between hidden md:flex">
+			<div>
+				<div class="flex items-center space-x-3 p-4 border-b border-gray-700">
+					<div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+					<div>
+						<p class="font-semibold text-sm">Juliana Silva</p>
+						<p class="text-xs text-gray-300">@julianasilva</p>
+					</div>
+				</div>
+				<nav class="flex flex-col space-y-1 mt-4 px-3">
+					<a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+						<span>Dashboard</span>
+					</a>
+					<a href="#" class="flex items-center space-x-3 bg-[#1C2A4A] px-3 py-2 rounded-lg">
+						<span>Sessions</span>
+					</a>
+					<a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+						<span>Progress</span>
+					</a>
+				</nav>
+			</div>
+			<div class="p-4 space-y-2 text-sm text-gray-300 border-t border-gray-700">
+				<a href="#" class="flex items-center space-x-2 hover:text-white">Settings</a>
+				<a href="#" class="flex items-center space-x-2 hover:text-white">Log Out</a>
+			</div>
+		</aside>
+
+		<main class="flex-1 p-6">
+			<div class="panel">
+				<div class="flex justify-center mb-4">
+					<h1 class="text-2xl font-bold text-white px-6 py-2 rounded-lg bg-[var(--navy)]">Sessions</h1>
+				</div>
+
+				<!-- Techniques -->
+				<div class="text-center mb-8">
+					<div class="inline-block px-4 py-2 bg-white rounded-lg border border-gray-300 mb-6">Choose study technique</div>
+					<div class="flex justify-center items-center gap-8 tech-row">
+						<button class="tech-btn" data-tech="pomodoro">Pomodoro</button>
+						<button class="tech-btn" data-tech="active">Active Recall</button>
+						<button class="tech-btn" data-tech="spaced">Spaced Repetition</button>
+                        <button class="tech-btn" data-tech="spaced">Interleaved Absence</button>
+					</div>
+				</div>
+
+				<!-- Practice Types -->
+				<div class="text-center mb-8">
+					<div class="inline-block px-4 py-2 bg-white rounded-lg border border-gray-300 mb-6">Practice Types</div>
+					<div class="flex justify-center items-center gap-8">
+						<div class="practice-card" data-practice="mc">
+							<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+							<small class="mt-2 text-xs">Multiple Choice</small>
+						</div>
+						<div class="practice-card inactive" data-practice="flash">
+							<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.5" d="M4 7h8v10H4zM16 7h2v10h-2z"/></svg>
+							<small class="mt-2 text-xs">Flashcards</small>
+						</div>
+						<div class="practice-card inactive" data-practice="match">
+							<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.5" d="M3 3h7v7H3zM14 14h7v7h-7zM14 3h7v7h-7zM3 14h7v7H3z"/></svg>
+							<small class="mt-2 text-xs">Matching</small>
+						</div>
+					</div>
+				</div>
+
+				<!-- Time settings -->
+				<div class="flex flex-col items-center gap-4">
+					<div class="flex flex-col items-center gap-2">
+						<label class="inline-block bg-white border border-gray-300 rounded px-3 py-1">Set Time: <input id="setTime" class="field-input ml-2" type="text" placeholder="HH:MM:SS" maxlength="8"></label>
+						<div id="setTimeError" class="text-sm text-red-600 mt-2" style="display:none"></div>
+					</div>
+					<div class="flex flex-col items-center gap-2">
+						<label class="inline-block bg-white border border-gray-300 rounded px-3 py-1">Set Break Time: <input id="breakTime" class="field-input ml-2" type="text" placeholder="HH:MM:SS" maxlength="8"></label>
+						<div id="breakTimeError" class="text-sm text-red-600 mt-2" style="display:none"></div>
+					</div>
+
+					<div class="mt-6">
+						<button id="startBtn" class="px-10 py-4 bg-[var(--navy)] text-white rounded-lg shadow-lg">Start</button>
+					</div>
+
+					<p id="summary" class="mt-4 text-sm text-gray-600"></p>
+				</div>
+			</div>
+		</main>
+	</div>
+
+	<script>
+		// Interactivity: select technique (single), practice types (toggle), read inputs
+		const techBtns = document.querySelectorAll('.tech-btn');
+		const practiceCards = document.querySelectorAll('.practice-card');
+		let selectedTechnique = null;
+		const selectedPractices = new Set();
+
+		techBtns.forEach(btn => {
+			btn.addEventListener('click', () => {
+				// Single select: remove active from others
+				techBtns.forEach(b => b.classList.remove('active'));
+				btn.classList.add('active');
+				selectedTechnique = btn.dataset.tech;
+				renderSummary();
+			});
+		});
+
+		practiceCards.forEach(card => {
+			card.addEventListener('click', () => {
+				const key = card.dataset.practice;
+				if (selectedPractices.has(key)) {
+					selectedPractices.delete(key);
+					card.classList.add('inactive');
+				} else {
+					selectedPractices.add(key);
+					card.classList.remove('inactive');
+				}
+				renderSummary();
+			});
+		});
+
+		function renderSummary(){
+			const summary = document.getElementById('summary');
+			const techText = selectedTechnique ? selectedTechnique.replace(/^[a-z]/, c=>c.toUpperCase()) : 'None';
+			const practices = Array.from(selectedPractices).map(p => ({mc:'Multiple Choice', flash:'Flashcards', match:'Matching'}[p]||p));
+			summary.textContent = `Technique: ${techText} — Practices: ${practices.length?practices.join(', '):'None'}`;
+		}
+
+		// Validate strictly HH:MM:SS where HH is 00-23 and MM/SS are 00-59
+		function isValidHHMMSS(s){
+			if(!/^\d{2}:\d{2}:\d{2}$/.test(s)) return false;
+			const [hh,mm,ss] = s.split(':').map(Number);
+			if(hh < 0 || hh > 23) return false;
+			if(mm < 0 || mm > 59) return false;
+			if(ss < 0 || ss > 59) return false;
+			return true;
+		}
+
+		// Friendly typing formatter: insert colons as user types digits (no forced padding until blur)
+		function formatWhileTyping(value){
+			const digits = (value || '').replace(/\D/g, '').slice(0,6);
+			switch(digits.length){
+				case 0: return '';
+				case 1: return digits; // partial hour
+				case 2: return digits; // full hour
+				case 3: return digits.slice(0,2) + ':' + digits.slice(2); // HH:M
+				case 4: return digits.slice(0,2) + ':' + digits.slice(2,4); // HH:MM
+				case 5: return digits.slice(0,2) + ':' + digits.slice(2,4) + ':' + digits.slice(4); // HH:MM:S
+				default: return digits.slice(0,2) + ':' + digits.slice(2,4) + ':' + digits.slice(4,6); // HH:MM:SS
+			}
+		}
+
+		function padTwo(n){ return String(n).padStart(2,'0'); }
+
+		function attachHHMMSSFormatter(input, errorEl){
+			input.addEventListener('input', (e) => {
+				const formatted = formatWhileTyping(input.value);
+				input.value = formatted;
+				// clear inline error while typing
+				errorEl.style.display = 'none';
+				input.classList.remove('invalid');
+			});
+
+			input.addEventListener('paste', (e) => {
+				e.preventDefault();
+				const paste = (e.clipboardData || window.clipboardData).getData('text') || '';
+				// try to extract hh:mm:ss or digits
+				const m = paste.match(/(\d{1,2}):?(\d{1,2})?:?(\d{1,2})?/);
+				if(m){
+					const parts = m.slice(1).filter(Boolean).map(p=>p);
+					const joined = parts.join('');
+					input.value = formatWhileTyping(joined);
+				} else {
+					input.value = formatWhileTyping(paste.replace(/\D/g,''));
+				}
+				errorEl.style.display = 'none';
+				input.classList.remove('invalid');
+			});
+
+			input.addEventListener('blur', () => {
+				const digits = (input.value || '').replace(/\D/g,'');
+				if(digits.length !== 6){
+					errorEl.textContent = 'Please enter a complete time in HH:MM:SS (6 digits).';
+					errorEl.style.display = 'block';
+					input.classList.add('invalid');
+					return;
+				}
+				const hh = Number(digits.slice(0,2));
+				const mm = Number(digits.slice(2,4));
+				const ss = Number(digits.slice(4,6));
+				if(hh > 23 || mm > 59 || ss > 59){
+					let parts = [];
+					if(hh > 23) parts.push('hours must be 00–23');
+					if(mm > 59) parts.push('minutes must be 00–59');
+					if(ss > 59) parts.push('seconds must be 00–59');
+					errorEl.textContent = parts.join('; ');
+					errorEl.style.display = 'block';
+					input.classList.add('invalid');
+					return;
+				}
+				// all good -> set padded value
+				input.value = padTwo(hh) + ':' + padTwo(mm) + ':' + padTwo(ss);
+				errorEl.style.display = 'none';
+				input.classList.remove('invalid');
+			});
+		}
+
+		attachHHMMSSFormatter(document.getElementById('setTime'), document.getElementById('setTimeError'));
+		attachHHMMSSFormatter(document.getElementById('breakTime'), document.getElementById('breakTimeError'));
+
+		document.getElementById('startBtn').addEventListener('click', ()=>{
+			const time = document.getElementById('setTime').value.trim();
+			const breakTime = document.getElementById('breakTime').value.trim();
+			if(!selectedTechnique){
+				alert('Please select a study technique.');
+				return;
+			}
+			if(selectedPractices.size === 0){
+				alert('Please choose at least one practice type.');
+				return;
+			}
+			if(!isValidHHMMSS(time)){
+				const el = document.getElementById('setTimeError');
+				el.textContent = 'Please provide a valid time in HH:MM:SS and ensure ranges are correct.';
+				el.style.display = 'block';
+				document.getElementById('setTime').classList.add('invalid');
+				return;
+			}
+			if(!isValidHHMMSS(breakTime)){
+				const el = document.getElementById('breakTimeError');
+				el.textContent = 'Please provide a valid break time in HH:MM:SS and ensure ranges are correct.';
+				el.style.display = 'block';
+				document.getElementById('breakTime').classList.add('invalid');
+				return;
+			}
+
+			// For now, just show a summary and simulate starting
+			const practices = Array.from(selectedPractices).map(p => ({mc:'Multiple Choice', flash:'Flashcards', match:'Matching'}[p]||p));
+			const out = `Starting session:\nTechnique: ${selectedTechnique}\nPractices: ${practices.join(', ')}\nTime: ${time}\nBreak: ${breakTime}`;
+			// show friendly modal-ish block
+			document.getElementById('summary').textContent = out.replace(/\n/g,' — ');
+			// Here you could integrate with routing or start timers
+		});
+
+		// Init: default select pomodoro
+		(function init(){
+			const defaultBtn = document.querySelector('.tech-btn[data-tech="pomodoro"]');
+			if(defaultBtn) defaultBtn.click();
+			// default practice: Multiple Choice
+			const mc = document.querySelector('.practice-card[data-practice="mc"]');
+			if(mc){ mc.click(); }
+		})();
+	</script>
+</body>
+</html>
+
