@@ -61,5 +61,26 @@
     </div>
   </div>
 
+
+  <script>
+document.querySelector("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+
+  const resp = await fetch("http://127.0.0.1:8000/api/register", {
+    method: "POST",
+    body: formData,
+  });
+
+  const result = await resp.json();
+  if (resp.ok) {
+    alert("User created successfully! ID: " + result.id);
+  } else {
+    alert("Error: " + (result.detail || JSON.stringify(result)));
+  }
+});
+</script>
+
 </body>
 </html>
+
