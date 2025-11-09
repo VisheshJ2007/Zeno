@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="OCR File Upload Application" />
+    <title>Zeno OCR Upload</title>
+    <style>
+/* Inlined App.css */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; background-color: #f5f5f5; }
+.App { min-height: 100vh; }
+.App-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; text-align: center; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+.App-header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.App-header p { font-size: 1.1rem; opacity: 0.9; }
+.App-main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+.upload-section { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); margin-bottom: 2rem; }
+.upload-section h2 { margin-bottom: 1.5rem; color: #333; }
+.upload-controls { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+input[type="file"] { padding: 0.5rem; border: 2px solid #ddd; border-radius: 5px; flex: 1; min-width: 200px; }
+.upload-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+.upload-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+.upload-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.selected-file { margin-top: 1rem; color: #666; font-style: italic; }
+.error-message { margin-top: 1rem; padding: 1rem; background-color: #fee; border: 1px solid #fcc; border-radius: 5px; color: #c33; }
+.upload-result { margin-top: 1.5rem; padding: 1.5rem; background-color: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 8px; }
+.upload-result h3 { color: #0369a1; margin-bottom: 1rem; }
+.upload-result p { margin-bottom: 0.5rem; color: #333; }
+.ocr-text-box { margin-top: 1rem; }
+.ocr-text-box pre { background-color: white; padding: 1rem; border-radius: 5px; border: 1px solid #ddd; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; color: #333; }
+.documents-section { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+.documents-section h2 { margin-bottom: 1.5rem; color: #333; }
+.no-documents { text-align: center; padding: 2rem; color: #999; font-style: italic; }
+.documents-list { display: grid; gap: 1.5rem; }
+.document-card { padding: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; transition: box-shadow 0.2s; }
+.document-card:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+.document-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e0e0e0; }
+.document-header h3 { color: #667eea; font-size: 1.2rem; word-break: break-word; }
+.delete-btn { background-color: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s; }
+.delete-btn:hover { background-color: #dc2626; }
+.document-info { margin-bottom: 1rem; }
+.document-info p { margin-bottom: 0.5rem; color: #666; font-size: 0.95rem; }
+.ocr-text-preview pre { background-color: #f9f9f9; padding: 1rem; border-radius: 5px; border: 1px solid #e0e0e0; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.4; color: #333; }
+@media (max-width: 768px) { .App-header h1 { font-size: 2rem; } .App-main { padding: 1rem; } .upload-controls { flex-direction: column; align-items: stretch; } .upload-btn { width: 100%; } .document-header { flex-direction: column; align-items: flex-start; gap: 1rem; } .delete-btn { width: 100%; } }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <!-- CDN libraries for quick single-file run -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Inlined React app (JSX) -->
+    <script type="text/babel">
+const { useState, useEffect } = React;
+
+function App() {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const API_URL = window.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+  useEffect(() => { fetchDocuments(); }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/documents`);
+      setDocuments(response.data);
+    } catch (err) {
+      console.error('Error fetching documents:', err);
+      setError('Failed to fetch documents');
+    }
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) { setSelectedFile(file); setError(null); setUploadResult(null); }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) { setError('Please select a file first'); return; }
+    const formData = new FormData(); formData.append('file', selectedFile);
+    setUploading(true); setError(null); setUploadResult(null);
+    try {
+      const response = await axios.post(`${API_URL}/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setUploadResult(response.data.document || response.data);
+      setSelectedFile(null);
+      const inputEl = document.getElementById('file-input'); if (inputEl) inputEl.value = '';
+      fetchDocuments();
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(err.response?.data?.error || 'Failed to upload file');
+    } finally { setUploading(false); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this document?')) return;
+    try { await axios.delete(`${API_URL}/documents/${id}`); fetchDocuments(); if (uploadResult && (uploadResult.id === id || uploadResult._id === id)) setUploadResult(null); }
+    catch (err) { console.error('Delete error:', err); setError('Failed to delete document'); }
+  };
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>OCR File Upload</h1>
+        <p>Upload images to extract text using Tesseract.js</p>
+      </header>
+      <main className="App-main">
+        <div className="upload-section">
+          <h2>Upload New Image</h2>
+          <div className="upload-controls">
+            <input id="file-input" type="file" accept="image/*" onChange={handleFileSelect} disabled={uploading} />
+            <button onClick={handleUpload} disabled={!selectedFile || uploading} className="upload-btn">{uploading ? 'Processing...' : 'Upload & Process OCR'}</button>
+          </div>
+          {selectedFile && (<p className="selected-file">Selected: {selectedFile.name}</p>)}
+          {error && <div className="error-message">{error}</div>}
+          {uploadResult && (
+            <div className="upload-result">
+              <h3>Upload Successful!</h3>
+              <p><strong>File:</strong> {uploadResult.originalName || uploadResult.name}</p>
+              <p><strong>Confidence:</strong> {uploadResult.confidence ? uploadResult.confidence.toFixed(2) + '%' : (uploadResult.ocrConfidence ? uploadResult.ocrConfidence.toFixed(2) + '%' : 'N/A')}</p>
+              <div className="ocr-text-box"><strong>Extracted Text:</strong><pre>{uploadResult.ocrText || 'No text detected'}</pre></div>
+            </div>
+          )}
+        </div>
+        <div className="documents-section">
+          <h2>Uploaded Documents ({documents.length})</h2>
+          {documents.length === 0 ? (<p className="no-documents">No documents uploaded yet</p>) : (
+            <div className="documents-list">{documents.map((doc) => (
+              <div key={doc._id || doc.id} className="document-card">
+                <div className="document-header">
+                  <h3>{doc.originalName}</h3>
+                  <button onClick={() => handleDelete(doc._id || doc.id)} className="delete-btn">Delete</button>
+                </div>
+                <div className="document-info">
+                  <p><strong>Uploaded:</strong> {doc.uploadDate ? new Date(doc.uploadDate).toLocaleString() : 'Unknown'}</p>
+                  <p><strong>Size:</strong> {doc.size ? (doc.size / 1024).toFixed(2) + ' KB' : 'Unknown'}</p>
+                  <p><strong>Confidence:</strong> {doc.ocrConfidence ? doc.ocrConfidence.toFixed(2) + '%' : 'N/A'}</p>
+                </div>
+                <div className="ocr-text-preview"><strong>OCR Text:</strong><pre>{doc.ocrText || 'No text detected'}</pre></div>
+              </div>
+            ))}</div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+const rootEl = document.getElementById('root');
+if (rootEl) {
+  const root = ReactDOM.createRoot(rootEl);
+  root.render(<React.StrictMode><App /></React.StrictMode>);
+} else { console.error('Root element not found'); }
+    </script>
+  </body>
+</html>
