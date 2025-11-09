@@ -586,5 +586,86 @@
   try { loadKeyTopicsForGuest(); } catch(e){}
   try { loadKeyTopicsForUser(); } catch(e){}
   </script>
+  <script>
+  async function loadTranscriptions() {
+    const section = document.getElementById('transcriptionsSection');
+    const list    = document.getElementById('transcriptionsList');
+    const msg     = document.getElementById('transcriptionsMsg');
+
+    section.classList.remove('hidden');
+    list.innerHTML = '<div class="text-gray-500">Loading…</div>';
+    msg.textContent = '';
+
+    // helper to render one doc
+    const renderOne = (doc) => {
+      const filename = doc.file_info?.original_filename || doc.filename || 'Unnamed file';
+      const created  = doc.created_at || doc.content?.created_at || '';
+      const summary  = doc.content?.summary || '';
+      const topics   = Array.isArray(doc.content?.key_topics) ? doc.content.key_topics : [];
+
+      const el = document.createElement('div');
+      el.className = 'border rounded-xl p-4 bg-gray-50';
+      el.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <div class="font-semibold text-gray-800">${filename}</div>
+            <div class="text-xs text-gray-500 mt-1">${created}</div>
+            <div class="mt-3 text-sm text-gray-700">
+              ${summary ? summary : '<em>Summary pending…</em>'}
+            </div>
+            <ul class="list-disc list-inside mt-2 text-sm text-gray-600">
+              ${topics.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}
+            </ul>
+          </div>
+        </div>`;
+      return el;
+    };
+
+    try {
+      // Try to list uploads (guest or signed-in)
+      const path = (window.currentUser && window.currentUser.id)
+        ? `/api/ocr/user/${window.currentUser.id}/transcriptions`
+        : `/api/ocr/user/guest/transcriptions`;
+
+      const data  = await api(path);
+      const items = data.transcriptions || data.results || [];
+
+      if (items.length) {
+        list.innerHTML = '';
+        items.forEach(t => list.appendChild(renderOne(t)));
+        return;
+      }
+
+      // No items—fallback to last id
+      const tid = localStorage.getItem('last_transcription_id');
+      if (tid) {
+  const doc = await api(`/api/ocr/transcription/${tid}`);
+        list.innerHTML = '';
+        list.appendChild(renderOne(doc));
+        return;
+      }
+
+      list.innerHTML = '<div class="text-gray-500">No uploads found.</div>';
+    } catch (err) {
+      // If list failed, try the single-doc fallback before giving up
+      try {
+        const tid = localStorage.getItem('last_transcription_id');
+        if (tid) {
+    const doc = await api(`/api/ocr/transcription/${tid}`);
+          list.innerHTML = '';
+          list.appendChild(renderOne(doc));
+          return;
+        }
+      } catch {}
+
+      console.error('loadTranscriptions error:', err);
+      list.innerHTML = '';
+      msg.textContent = 'Error loading uploads: ' + (err?.message || String(err));
+    }
+  }
+
+  document.getElementById('viewUploadsBtn')
+    ?.addEventListener('click', () => loadTranscriptions());
+</script>
 </body>
 </html>
