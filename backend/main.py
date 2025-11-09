@@ -10,49 +10,71 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from bson import ObjectId
 
-# ----- import order matters a bit for clean startup -----
-# Ensure project root is importable when launched as a module
+# ──────────────────────────────────────────────────────────────────────────────
+# Make the project importable when Vercel imports api/index.py
+# (api/index.py will do: from backend.main import app)
+# ──────────────────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Local modules
+# Local modules (after sys.path tweak)
 import backend.database as database
 from backend.routers.auth import router as auth_router
 from backend.routers.ocr import router as ocr_router
 from backend.routers.azure_chat import router as azure_chat_router
-
-# Azure OpenAI helper
 from backend.azure_client import init_azure_client, get_client
 
-# ----------------------------------------------------------------------
-
-app = FastAPI(title="Zeno API")
-
+# ──────────────────────────────────────────────────────────────────────────────
+# App / Logging
+# ──────────────────────────────────────────────────────────────────────────────
 logger = logging.getLogger("zeno")
 logging.basicConfig(level=logging.INFO)
 
-# --- CORS: allow local dev (Live Server / localhost) ---
-_allow_origins = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-_frontend_origin = os.getenv("FRONTEND_ORIGIN")
-if _frontend_origin and _frontend_origin not in _allow_origins:
-    _allow_origins.append(_frontend_origin)
+app = FastAPI(title="Zeno API", version="1.0.0")
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CORS (allow local and Vercel)
+# ──────────────────────────────────────────────────────────────────────────────
+def _cors_origins() -> list[str]:
+    origins = [
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+        "https://zeno-steel.vercel.app",
+    ]
+    # FRONTEND_ORIGIN (if you keep a separate site)
+    fe = os.getenv("FRONTEND_ORIGIN")
+    if fe:
+        origins.append(fe)
+
+    # If running on Vercel, VERCEL_URL is like "your-app.vercel.app"
+    vercel_url = os.getenv("VERCEL_URL")
+    if vercel_url:
+        origins.append(f"https://{vercel_url}")
+
+    # Also allow the project’s production domain (helpful when calling API from same site)
+    # e.g. https://zeno-steel.vercel.app
+    public_url = os.getenv("PUBLIC_ORIGIN")
+    if public_url:
+        origins.append(public_url)
+
+    # De-dup
+    return sorted(set(origins))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_allow_origins,
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ---------- small helpers ----------
+# ──────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ──────────────────────────────────────────────────────────────────────────────
 def to_public(doc: dict | None):
     """Convert Mongo _id to string id and remove private fields."""
     if not doc:
@@ -61,8 +83,17 @@ def to_public(doc: dict | None):
     doc.pop("_id", None)
     return doc
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Health & Root
+# ──────────────────────────────────────────────────────────────────────────────
+@app.get("/")
+def root():
+    return {
+        "ok": True,
+        "service": "Zeno API",
+        "hint": "API is alive. Try /health, /db-ping or /docs",
+    }
 
-# ---------- health + ping ----------
 @app.get("/health")
 def health():
     return {"ok": True}
@@ -75,8 +106,9 @@ async def db_ping():
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-
-# ---------- models ----------
+# ──────────────────────────────────────────────────────────────────────────────
+# Models
+# ──────────────────────────────────────────────────────────────────────────────
 class PlanIn(BaseModel):
     user: Optional[str] = None
     topic: str
@@ -86,8 +118,9 @@ class PlanUpdate(BaseModel):
     topic: Optional[str] = None
     notes: Optional[str] = None
 
-
-# ---------- CRUD: plans ----------
+# ──────────────────────────────────────────────────────────────────────────────
+# Plans CRUD
+# ──────────────────────────────────────────────────────────────────────────────
 @app.post("/plans", response_model=dict)
 async def create_plan(plan: PlanIn):
     logger.info("Received create_plan request: %s", plan.model_dump())
@@ -139,20 +172,19 @@ async def delete_plan(plan_id: str):
         raise HTTPException(400, "Invalid plan id")
     return {"deleted": res.deleted_count == 1}
 
-
-# ---------- simple echo (no DB touch) ----------
+# ──────────────────────────────────────────────────────────────────────────────
+# Debug / Azure test
+# ──────────────────────────────────────────────────────────────────────────────
 @app.get("/debug/echo")
 async def debug_echo():
     logger.info("/debug/echo called")
     return {"ok": True, "echo": "server alive"}
 
-
-# ---------- optional: Azure sanity check ----------
 @app.get("/azure-test")
 async def azure_test():
     client = get_client()
     if not client:
-        return {"error": "Azure client not initialized (check .env values)"}
+        return {"error": "Azure client not initialized (check env vars)"}
     try:
         resp = client.chat.completions.create(
             model=os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o"),
@@ -162,34 +194,47 @@ async def azure_test():
     except Exception as e:
         return {"error": str(e)}
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Startup / Shutdown (idempotent for serverless)
+# ──────────────────────────────────────────────────────────────────────────────
+_START_DONE = False
 
-# ---------- lifecycle ----------
 @app.on_event("startup")
-async def startup_indexes():
-    # 1) Azure first (so any routes depending on it are ready)
+async def startup():
+    global _START_DONE
+    if _START_DONE:
+        return
+
+    # 1) Azure
     init_azure_client()
 
-    # 2) DB connection + indexes
+    # 2) DB
     try:
         database.init_db()
     except Exception as e:
         logger.exception("Failed to initialize DB: %s", e)
         raise
 
-    await database.db.users.create_index("email", unique=True)
-    await database.db.users.create_index("username", unique=True)
-    logger.info("Indexes ensured for users collection")
+    # 3) Indexes (safe if already exist)
+    try:
+        await database.db.users.create_index("email", unique=True)
+        await database.db.users.create_index("username", unique=True)
+        logger.info("Indexes ensured for users collection")
+    except Exception:
+        logger.exception("Index ensure failed (continuing)")
 
+    _START_DONE = True
 
 @app.on_event("shutdown")
-async def shutdown_db():
+async def shutdown():
     try:
         database.close_db()
     except Exception:
         logger.exception("Error closing DB")
 
-
-# ---------- include routers ----------
+# ──────────────────────────────────────────────────────────────────────────────
+# Routers
+# ──────────────────────────────────────────────────────────────────────────────
 app.include_router(auth_router)
 app.include_router(ocr_router)
 app.include_router(azure_chat_router)
