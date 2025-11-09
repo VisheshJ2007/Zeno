@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zeno — Sign In / Sign Up</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-[#E7F4FF] text-gray-800">
+  <div class="flex min-h-screen">
+
+    <!-- Left side illustration / brand -->
+    <aside class="hidden lg:flex w-1/2 bg-[#0B1736] text-white items-center justify-center p-10">
+      <div class="max-w-md">
+        <img src="zeno-logo.png" alt="Zeno" class="w-16 h-16 mb-6">
+        <h1 class="text-3xl font-semibold">Welcome to Zeno</h1>
+        <p class="mt-3 text-gray-300">
+          Log in to sync your study plans and uploads. New here? Create an account in seconds.
+        </p>
+        <ul class="mt-6 space-y-2 text-sm text-gray-300 list-disc list-inside">
+          <li>Keep your plans in the cloud</li>
+          <li>View OCR uploads on any device</li>
+          <li>Unlock summaries & key topics</li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Right side auth card -->
+    <main class="flex-1 flex items-center justify-center p-6">
+      <div class="w-full max-w-md">
+        <div class="bg-white rounded-2xl shadow p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <img src="zeno-logo.png" class="w-10 h-10" alt="logo">
+              <h2 id="formTitle" class="text-xl font-semibold">Sign in to your account</h2>
+            </div>
+            <a href="zeno.html" class="text-sm text-[#0B1736] hover:underline">Go to Dashboard</a>
+          </div>
+
+          <p id="formSubtitle" class="mt-1 text-sm text-gray-500">
+            Enter your credentials to continue.
+          </p>
+
+          <form id="authForm" class="mt-6 space-y-4">
+            <!-- Username (only for sign up) -->
+            <div id="usernameWrap" class="hidden">
+              <label class="block text-sm font-medium mb-1" for="username">Username (optional)</label>
+              <input id="username" type="text" class="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="e.g., visheshjain"/>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-1" for="email">Email</label>
+              <input id="email" type="email" required class="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="you@example.com"/>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-1" for="password">Password</label>
+              <div class="relative">
+                <input id="password" type="password" required minlength="6" class="w-full rounded-lg border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="••••••••"/>
+                <button type="button" id="togglePw" class="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">Show</button>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">At least 6 characters.</p>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2 text-sm">
+                <input id="remember" type="checkbox" class="rounded border-gray-300">
+                Remember me
+              </label>
+              <button type="button" id="modeToggle" class="text-sm text-[#0B1736] hover:underline">
+                Create an account
+              </button>
+            </div>
+
+            <button id="submitBtn" class="w-full bg-[#0B1736] text-white rounded-lg py-2.5 font-medium hover:opacity-95">
+              Continue
+            </button>
+
+            <div id="msg" class="text-sm mt-2 h-5"></div>
+          </form>
+
+          <div class="mt-6 text-xs text-gray-500">
+            By continuing, you agree to the Terms and acknowledge the Privacy Policy.
+          </div>
+        </div>
+
+        <!-- Quick dev links -->
+        <div class="text-center text-xs text-gray-500 mt-4">
+          <a href="zeno.html" class="hover:underline">Open Dashboard</a> ·
+          <a href="#" id="signOutLink" class="hover:underline">Sign out</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // -----------------------------
+    // API base: use same pattern as zeno.html
+    // -----------------------------
+    const API =
+      (window.ZENO_AUTH_CONFIG && window.ZENO_AUTH_CONFIG.API_BASE) ||
+      "http://127.0.0.1:8000";
+
+    // -----------------------------
+    // Helper for fetch with timeout & JSON
+    // -----------------------------
+    async function api(path, { method = "GET", body = null, auth = false, timeout = 20000 } = {}) {
+      const headers = { "Content-Type": "application/json" };
+      if (auth) {
+        const token = localStorage.getItem("zeno_token");
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+      try {
+        const res = await fetch(`${API}${path}`, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : null,
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+
+        if (!res.ok) {
+          let text = "";
+          try { text = await res.text(); } catch (err) { /* ignore */ }
+          throw new Error(`${res.status} ${res.statusText}${text ? `: ${text}` : ""}`);
+        }
+
+        const ct = res.headers.get("content-type") || "";
+        return ct.includes("application/json") ? res.json() : res.text();
+      } catch (e) {
+        clearTimeout(timer);
+        if (e && e.name === "AbortError") throw new Error("Request timed out");
+        throw e;
+      }
+    }
+
+    // -----------------------------
+    // UI wiring
+    // -----------------------------
+    const form = document.getElementById("authForm");
+    const msg  = document.getElementById("msg");
+    const modeToggle = document.getElementById("modeToggle");
+    const usernameWrap = document.getElementById("usernameWrap");
+    const formTitle = document.getElementById("formTitle");
+    const formSubtitle = document.getElementById("formSubtitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const togglePw = document.getElementById("togglePw");
+
+    let mode = "login"; // "login" | "register"
+
+    function setMode(next) {
+      mode = next;
+      if (mode === "login") {
+        usernameWrap.classList.add("hidden");
+        formTitle.textContent = "Sign in to your account";
+        formSubtitle.textContent = "Enter your credentials to continue.";
+        modeToggle.textContent = "Create an account";
+        submitBtn.textContent = "Continue";
+      } else {
+        usernameWrap.classList.remove("hidden");
+        formTitle.textContent = "Create your account";
+        formSubtitle.textContent = "Sign up to save plans & uploads.";
+        modeToggle.textContent = "I already have an account";
+        submitBtn.textContent = "Create account";
+      }
+      msg.textContent = "";
+      msg.className = "text-sm mt-2 h-5";
+    }
+
+    modeToggle.addEventListener("click", () => setMode(mode === "login" ? "register" : "login"));
+    togglePw.addEventListener("click", () => {
+      const pw = document.getElementById("password");
+      if (pw.type === "password") {
+        pw.type = "text"; togglePw.textContent = "Hide";
+      } else {
+        pw.type = "password"; togglePw.textContent = "Show";
+      }
+    });
+
+    // If a valid token already exists, bounce to dashboard
+    (async function maybeRedirect() {
+      const token = localStorage.getItem("zeno_token");
+      if (!token) return;
+      try {
+        const me = await api("/auth/me", { auth: true });
+        if (me && me.email) {
+          // already signed in
+          window.location.href = "zeno.html";
+        }
+      } catch { /* ignore */ }
+    })();
+
+    // Sign out helper link
+    document.getElementById("signOutLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("zeno_token");
+      alert("Signed out.");
+      window.location.reload();
+    });
+
+    // Submit handler
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const password = document.getElementById("password").value;
+      const username = document.getElementById("username").value.trim() || null;
+
+      msg.textContent = mode === "login" ? "Signing in…" : "Creating account…";
+      msg.className = "text-sm mt-2 h-5 text-gray-500";
+      submitBtn.disabled = true;
+
+      try {
+        let data;
+        if (mode === "login") {
+          data = await api("/auth/login", { method: "POST", body: { email, password } });
+        } else {
+          data = await api("/auth/register", { method: "POST", body: { email, password, username } });
+        }
+        const token = data && data.access_token;
+        if (!token) throw new Error("No token returned from server.");
+
+        // Save token
+        localStorage.setItem("zeno_token", token);
+
+        // Optional: verify /me before redirect (confirms CORS + token)
+        try { await api("/auth/me", { auth: true }); } catch {}
+
+        // Go to dashboard
+        window.location.href = "zeno.html";
+      } catch (err) {
+        console.error(err);
+        const m = String(err.message || err);
+        const pretty = /detail":"([^"]+)"/.exec(m)?.[1] || m;
+        msg.textContent = pretty.replace(/^Error:\s*/,'');
+        msg.className = "text-sm mt-2 h-5 text-red-600";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Default to "login" mode
+    setMode("login");
+  </script>
+</body>
+</html>
