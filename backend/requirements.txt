@@ -3,8 +3,9 @@ fastapi==0.112.2
 uvicorn[standard]==0.30.6
 
 # --- Database ---
-motor==3.3.1            # async MongoDB driver
-pymongo==4.6.0          # explicitly pin to match motor
+motor==3.3.1                 # async MongoDB driver
+pymongo[srv]==4.6.0          # SRV support for mongodb+srv URIs
+dnspython==2.6.1             # required for SRV lookups
 
 # --- Environment / Settings ---
 python-dotenv==1.0.1
@@ -22,7 +23,7 @@ itsdangerous==2.1.2
 httpx==0.25.2
 requests==2.31.0
 
-# --- Optional: Azure/OpenAI (new SDK works with Azure) ---
+# --- Azure/OpenAI (new SDK works with Azure) ---
 openai==1.45.0
 
 # --- File utilities ---
