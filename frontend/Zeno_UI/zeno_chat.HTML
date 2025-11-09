@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Zeno — Chat</title>
+  <style>
+    :root{--card-bg:#f4f7fb;--accent:#0f1724;--muted:#6b7280;--primary:#0b76ff}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:linear-gradient(90deg,#dff6ea 0%, #eef4ff 50%, #d9f0ff 100%);}
+    .app-shell{max-width:980px;margin:28px auto;padding:22px;border-radius:20px;background:var(--card-bg);box-shadow:0 6px 18px rgba(12,22,40,0.06);height:82vh;display:flex;flex-direction:column;position:relative;overflow:hidden;border:3px solid rgba(0,0,0,0.06)}
+    .chat-area{flex:1;padding:18px 20px;overflow:auto}
+    .bot-message{display:flex;gap:12px;align-items:flex-start;margin-bottom:18px}
+    .avatar{width:44px;height:44px;border-radius:50%;background:#0b76ff;color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
+    .bubble{background:white;padding:12px 16px;border-radius:18px;border:2px solid rgba(0,0,0,0.06);max-width:78%;color:#0b1030}
+    .composer{display:flex;align-items:center;gap:12px;padding:16px;background:transparent}
+    .input{flex:1;background:white;border-radius:10px;padding:12px 14px;border:2px solid rgba(0,0,0,0.06);font-size:15px}
+    .btn{width:48px;height:48px;border-radius:50%;border:none;background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(12,22,40,0.06)}
+    .status{font-size:14px;color:var(--muted);margin-left:12px}
+    @media (max-width:640px){.app-shell{margin:12px;border-radius:14px;height:86vh}}
+  </style>
+</head>
+<body>
+  <div class="app-shell" role="main">
+    <div class="chat-area" id="chatArea">
+      <div class="bot-message">
+        <div class="avatar">Z</div>
+        <div class="bubble">Hello — ask me a question about your studies and I'll answer using Azure AI.</div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <input id="userInput" class="input" placeholder="Type your message..." aria-label="Message input" />
+      <button id="sendBtn" class="btn" title="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 2L11 13" stroke="#0b76ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22l-4-9-9-4 20-7z" stroke="#0b76ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div id="statusText" class="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = (window.ZENO_AUTH_CONFIG && window.ZENO_AUTH_CONFIG.API_BASE) ? (window.ZENO_AUTH_CONFIG.API_BASE + '/api/azure/chat') : 'http://127.0.0.1:8000/api/azure/chat';
+    const chatArea = document.getElementById('chatArea');
+    const input = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const statusText = document.getElementById('statusText');
+
+    function appendBubble(text, isBot=false){
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.marginBottom = '12px';
+      if(isBot){ wrapper.className = 'bot-message'; wrapper.style.gap='12px'; }
+      else { wrapper.style.justifyContent = 'flex-end'; }
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.style.width = isBot ? '44px' : '36px';
+      avatar.style.height = isBot ? '44px' : '36px';
+      avatar.textContent = isBot ? 'Z' : 'U';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+      if(!isBot){ bubble.style.background = '#0b76ff'; bubble.style.color='white'; bubble.style.border='none'; }
+
+      if(isBot){ wrapper.appendChild(avatar); wrapper.appendChild(bubble); }
+      else { wrapper.appendChild(bubble); }
+
+      chatArea.appendChild(wrapper);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    async function sendMessage(){
+      const text = input.value.trim();
+      if(!text) return;
+      appendBubble(text, false);
+      statusText.textContent = 'Thinking…';
+      sendBtn.disabled = true;
+
+      try{
+        const resp = await fetch(API_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ user: null, message: text })
+        });
+        if(!resp.ok){
+          const err = await resp.json().catch(()=>({detail: resp.statusText}));
+          statusText.textContent = 'Error: ' + (err.detail||resp.statusText);
+          return;
+        }
+        const data = await resp.json();
+        if(data && data.success){
+          appendBubble(data.response || '(no response)', true);
+          statusText.textContent = 'Received';
+        } else {
+          statusText.textContent = 'No response from server';
+        }
+      } catch(e){
+        statusText.textContent = 'Network error: ' + e.message;
+      } finally{
+        sendBtn.disabled = false;
+        input.value = '';
+        setTimeout(()=> statusText.textContent = '', 3000);
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
+  </script>
+</body>
+</html>

@@ -22,6 +22,7 @@ if PROJECT_ROOT not in sys.path:
 import backend.database as database
 from backend.routers.auth import router as auth_router
 from backend.routers.ocr import router as ocr_router
+from backend.routers.azure_chat import router as azure_chat_router
 
 # -------------------------------------------------------------------
 # App + logging
@@ -192,3 +193,4 @@ async def shutdown_db():
 # -------------------------------------------------------------------
 app.include_router(auth_router)
 app.include_router(ocr_router)
+app.include_router(azure_chat_router)
