@@ -7,20 +7,72 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-r from-[#BCEAE3] via-[#B1DCEB] to-[#9EC5F8]">
+  <div class="flex min-h-screen">
+		<!-- Sidebar (matches zeno.html) -->
+		<aside class="w-64 bg-[#0B1736] text-white flex flex-col justify-between">
+			<div>
+				<!-- Profile -->
+				<div class="flex items-center space-x-3 p-4 border-b border-gray-700">
+					<div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+					<div>
+						<p class="font-semibold text-sm">Juliana Silva</p>
+						<p class="text-xs text-gray-400">@julianasilva</p>
+					</div>
+				</div>
+				<!-- Sidebar Navigation -->
+				<nav class="flex flex-col space-y-1 mt-4 px-3">
+					<a href="https://VisheshJ2007.github.io/Zeno/zeno.html"
+						class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+						<img src="https://bit.ly/home-paage" alt="Dashboard" class="w-5 h-5 bg-white">
+						<span>Dashboard</span>
+					</a>
+					<a href="https://VisheshJ2007.github.io/Zeno/zeno_sessions.HTML"
+						class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+						<img src="https://bit.ly/session-meeting" alt="Sessions" class="w-5 h-5 bg-white">
+						<span>Sessions</span>
+					</a>
+					<a href="https://VisheshJ2007.github.io/Zeno/zeno_progress.HTML"
+						class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+						<img src="https://bit.ly/3LsNsSd" alt="Progress" class="w-5 h-5 bg-white">
+						<span>Progress</span>
+					</a>
+					<a href="https://VisheshJ2007.github.io/Zeno/zeno_practice.HTML"
+						class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+						<img src="https://tinyurl.com/abc-multiple-choice" alt="Practice" class="w-5 h-5 bg-white">
+						<span>Practice</span>
+					</a>
+					<a href="https://VisheshJ2007.github.io/Zeno/zeno_review.html"
+						class="flex items-center space-x-3 bg-[#1C2A4A] px-3 py-2 rounded-lg">
+						<img src="https://tinyurl.com/review-icon" alt="Review" class="w-5 h-5 bg-white">
+						<span>Review</span>
+					</a>
+					<a href="https://VisheshJ2007.github.io/Zeno/zeno_profile.html"
+						class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+						<img src="https://tinyurl.com/user-profile-new" alt="User" class="w-5 h-5 bg-white">
+						<span>User</span>
+					</a>
+				</nav>
+			</div>
+			<!-- Bottom Section -->
+			<div class="p-4 space-y-2 text-sm text-gray-300 border-t border-gray-700">
+				<a href="#" class="flex items-center space-x-2 hover:text-white">
+					<img src="https://tinyurl.com/log-out-logo" alt="Logout" class="w-4 h-4 bg-white">
+					<span>Log Out</span>
+				</a>
+			</div>
+		</aside>
 
-  <!-- Sidebar & Header Section -->
-  <div class="flex p-6">
-    <div class="mr-10">
-      <button class="text-white text-2xl font-semibold">☰</button>
-    </div>
-    <div class="text-3xl font-bold text-white">Profile</div>
-  </div>
 
-  <!-- Profile Section -->
-  <div class="max-w-xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10 flex justify-center items-center">
+
+
+	<!-- Profile Section -->
+	<div class="max-w-xl w-full mx-auto p-6 bg-white rounded-lg shadow-md self-center flex justify-center items-center py-10">
     
     <!-- Profile Content (Centering the content) -->
-    <div class="w-full space-y-6">
+    <div class="w-full space-y-2">
+        <div class="flex p-6 justify-center">
+          <div class="text-3xl font-bold text-black">Profile</div>
+        </div>
       
       <!-- Profile Picture and Username -->
       <div class="flex justify-center items-center mb-8">
@@ -53,7 +105,7 @@
         </div>
 
         <!-- Enable Notifications Section -->
-        <div class="flex items-center w-full">
+        <div class="flex items-center w-full justify-center">
           <input type="checkbox" id="notifications" name="notifications" class="mr-3">
           <label for="notifications" class="font-medium text-gray-700">ENABLE NOTIFICATIONS</label>
         </div>
