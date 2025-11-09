@@ -83,33 +83,59 @@
 </head>
 <body class="font-sans text-gray-800">
 	<div class="flex min-h-screen">
-		<!-- Sidebar (match theme from zeno.HTML) -->
-		<aside class="w-64 bg-[var(--navy)] text-white flex flex-col justify-between hidden md:flex">
-			<div>
-				<div class="flex items-center space-x-3 p-4 border-b border-gray-700">
-					<div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+				<!-- Sidebar (copied from zeno.html for consistency) -->
+				<aside class="w-64 bg-[#0B1736] text-white flex flex-col justify-between">
 					<div>
-						<p class="font-semibold text-sm">Juliana Silva</p>
-						<p class="text-xs text-gray-300">@julianasilva</p>
+						<!-- Profile -->
+						<div class="flex items-center space-x-3 p-4 border-b border-gray-700">
+							<div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+							<div>
+								<p class="font-semibold text-sm">Juliana Silva</p>
+								<p class="text-xs text-gray-400">@julianasilva</p>
+							</div>
+						</div>
+						<!-- Sidebar Navigation -->
+						<nav class="flex flex-col space-y-1 mt-4 px-3">
+							<a href="https://VisheshJ2007.github.io/Zeno/zeno.html"
+								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+								<img src="https://bit.ly/home-paage" alt="Dashboard" class="w-5 h-5 bg-white">
+								<span>Dashboard</span>
+							</a>
+							<a href="https://VisheshJ2007.github.io/Zeno/zeno_sessions.HTML"
+								class="flex items-center space-x-3 bg-[#1C2A4A] px-3 py-2 rounded-lg">
+								<img src="https://bit.ly/session-meeting" alt="Sessions" class="w-5 h-5 bg-white">
+								<span>Sessions</span>
+							</a>
+							<a href="https://VisheshJ2007.github.io/Zeno/zeno_progress.HTML"
+								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+								<img src="https://bit.ly/3LsNsSd" alt="Progress" class="w-5 h-5 bg-white">
+								<span>Progress</span>
+							</a>
+							<a href="https://VisheshJ2007.github.io/Zeno/zeno_practice.HTML"
+								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+								<img src="https://tinyurl.com/abc-multiple-choice" alt="Practice" class="w-5 h-5 bg-white">
+								<span>Practice</span>
+							</a>
+							<a href="https://VisheshJ2007.github.io/Zeno/zeno_review.html"
+								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+								<img src="https://tinyurl.com/review-icon" alt="Review" class="w-5 h-5 bg-white">
+								<span>Review</span>
+							</a>
+							<a href="https://VisheshJ2007.github.io/Zeno/zeno_profile.html"
+								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+								<img src="https://tinyurl.com/user-profile-new" alt="User" class="w-5 h-5 bg-white">
+								<span>User</span>
+							</a>
+						</nav>
 					</div>
-				</div>
-				<nav class="flex flex-col space-y-1 mt-4 px-3">
-					<a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
-						<span>Dashboard</span>
-					</a>
-					<a href="#" class="flex items-center space-x-3 bg-[#1C2A4A] px-3 py-2 rounded-lg">
-						<span>Sessions</span>
-					</a>
-					<a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
-						<span>Progress</span>
-					</a>
-				</nav>
-			</div>
-			<div class="p-4 space-y-2 text-sm text-gray-300 border-t border-gray-700">
-				<a href="#" class="flex items-center space-x-2 hover:text-white">Settings</a>
-				<a href="#" class="flex items-center space-x-2 hover:text-white">Log Out</a>
-			</div>
-		</aside>
+					<!-- Bottom Section -->
+					<div class="p-4 space-y-2 text-sm text-gray-300 border-t border-gray-700">
+						<a href="#" class="flex items-center space-x-2 hover:text-white">
+							<img src="https://tinyurl.com/log-out-logo" alt="Logout" class="w-4 h-4 bg-white">
+							<span>Log Out</span>
+						</a>
+					</div>
+				</aside>
 
 		<main class="flex-1 p-6">
 			<div class="panel">
