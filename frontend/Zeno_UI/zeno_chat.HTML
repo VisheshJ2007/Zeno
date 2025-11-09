@@ -18,8 +18,22 @@
     .status{font-size:14px;color:var(--muted);margin-left:12px}
     @media (max-width:640px){.app-shell{margin:12px;border-radius:14px;height:86vh}}
   </style>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
+  <!-- Timer Display -->
+  <div id="timerContainer" class="text-center py-3 px-4 bg-white/50 backdrop-blur-sm" style="display: none;">
+    <div class="flex justify-center items-center gap-8">
+      <div class="text-center">
+        <div class="text-sm font-semibold text-gray-600">NEXT BREAK IN</div>
+        <div id="breakTimer" class="text-3xl font-bold text-[#0B1736]">00:00:00</div>
+      </div>
+      <div class="text-center">
+        <div class="text-sm font-semibold text-gray-600">SESSION ENDS IN</div>
+        <div id="sessionTimer" class="text-3xl font-bold text-[#0B1736]">00:00:00</div>
+      </div>
+    </div>
+  </div>
   <div class="app-shell" role="main">
     <div class="chat-area" id="chatArea">
       <div class="bot-message">
@@ -33,8 +47,17 @@
       <button id="sendBtn" class="btn" title="Send">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 2L11 13" stroke="#0b76ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22l-4-9-9-4 20-7z" stroke="#0b76ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+      
       <div id="statusText" class="status" aria-live="polite"></div>
     </div>
+
+    <!-- Return to Home button -->
+  <div class="flex justify-center mt-4">
+    <button id="homeBtn"
+      class="px-10 py-4 bg-black text-white rounded-lg shadow-lg">
+      Return to Sessions Page
+    </button>
+  </div>
   </div>
 
   <script>
@@ -42,7 +65,9 @@
     const chatArea = document.getElementById('chatArea');
     const input = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const homeBtn = document.getElementById('homeBtn');
     const statusText = document.getElementById('statusText');
+    let timerInterval; // To hold the interval ID
 
     function appendBubble(text, isBot=false){
       const wrapper = document.createElement('div');
@@ -105,6 +130,75 @@
 
     sendBtn.addEventListener('click', sendMessage);
     input.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
+    homeBtn.addEventListener('click', () => {
+      window.location.href = 'zeno_sessions.html';
+      if (timerInterval) clearInterval(timerInterval);
+    });
+
+    // --- Timer Logic ---
+    function parseHHMMSSToSeconds(timeStr) {
+      if (!timeStr || !/^\d{2}:\d{2}:\d{2}$/.test(timeStr)) return 0;
+      const parts = timeStr.split(':').map(Number);
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+
+    function formatSecondsToHHMMSS(totalSeconds) {
+      if (totalSeconds < 0) totalSeconds = 0;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return [hours, minutes, seconds].map(v => String(v).padStart(2, '0')).join(':');
+    }
+
+    function startTimers(sessionSeconds, breakSeconds) {
+      const timerContainer = document.getElementById('timerContainer');
+      const sessionTimerEl = document.getElementById('sessionTimer');
+      const breakTimerEl = document.getElementById('breakTimer');
+
+      if (!sessionTimerEl || !breakTimerEl) return;
+
+      timerContainer.style.display = 'block';
+
+      let remainingSession = sessionSeconds;
+      let remainingBreak = breakSeconds;
+
+      // Clean up any existing timer
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        remainingSession--;
+        remainingBreak--;
+
+        sessionTimerEl.textContent = formatSecondsToHHMMSS(remainingSession);
+        breakTimerEl.textContent = formatSecondsToHHMMSS(remainingBreak);
+
+        // When break timer hits zero, reset it
+        if (remainingBreak <= 0) {
+          remainingBreak = breakSeconds;
+        }
+
+        // When session timer ends, stop everything
+        if (remainingSession <= 0) {
+          clearInterval(timerInterval);
+          sessionTimerEl.textContent = "00:00:00";
+          breakTimerEl.textContent = "Finished!";
+        }
+      }, 1000);
+    }
+
+    // On page load, check for timer parameters and start timers
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionTime = params.get('session');
+      const breakTime = params.get('break');
+
+      if (sessionTime && breakTime) {
+        startTimers(parseHHMMSSToSeconds(sessionTime), parseHHMMSSToSeconds(breakTime));
+      }
+    });
   </script>
+
+  
+
 </body>
 </html>

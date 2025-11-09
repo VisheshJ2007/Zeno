@@ -96,36 +96,39 @@
 						</div>
 						<!-- Sidebar Navigation -->
 						<nav class="flex flex-col space-y-1 mt-4 px-3">
-							<a href="https://VisheshJ2007.github.io/Zeno/zeno.html"
-								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
-								<img src="https://bit.ly/home-paage" alt="Dashboard" class="w-5 h-5 bg-white">
-								<span>Dashboard</span>
-							</a>
-							<a href="https://VisheshJ2007.github.io/Zeno/zeno_sessions.HTML"
-								class="flex items-center space-x-3 bg-[#1C2A4A] px-3 py-2 rounded-lg">
-								<img src="https://bit.ly/session-meeting" alt="Sessions" class="w-5 h-5 bg-white">
-								<span>Sessions</span>
-							</a>
-							<a href="https://VisheshJ2007.github.io/Zeno/zeno_progress.HTML"
-								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
-								<img src="https://bit.ly/3LsNsSd" alt="Progress" class="w-5 h-5 bg-white">
-								<span>Progress</span>
-							</a>
-							<a href="https://VisheshJ2007.github.io/Zeno/zeno_practice.HTML"
-								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
-								<img src="https://tinyurl.com/abc-multiple-choice" alt="Practice" class="w-5 h-5 bg-white">
-								<span>Practice</span>
-							</a>
-							<a href="https://VisheshJ2007.github.io/Zeno/zeno_review.html"
-								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
-								<img src="https://tinyurl.com/review-icon" alt="Review" class="w-5 h-5 bg-white">
-								<span>Review</span>
-							</a>
-							<a href="https://VisheshJ2007.github.io/Zeno/zeno_profile.html"
-								class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
-								<img src="https://tinyurl.com/user-profile-new" alt="User" class="w-5 h-5 bg-white">
-								<span>User</span>
-							</a>
+							<a href="zeno.html"
+            class="flex items-center space-x-3 bg-[#1C2A4A] px-3 py-2 rounded-lg">
+            <img src="https://bit.ly/home-paage" alt="Dashboard" class="w-5 h-5 bg-white">
+            <span>Dashboard</span>
+          </a>
+
+          <!-- Sessions Link (Remove active class) -->
+          <a href="zeno_sessions.HTML"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://bit.ly/session-meeting" alt="Sessions" class="w-5 h-5 bg-white">
+            <span>Sessions</span>
+          </a>
+
+          <a href="zeno_progress.HTML"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://bit.ly/3LsNsSd" alt="Progress" class="w-5 h-5 bg-white">
+            <span>Progress</span>
+          </a>
+          <a href="zeno_practice.HTML"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://tinyurl.com/abc-multiple-choice" alt="Practice" class="w-5 h-5 bg-white">
+            <span>Practice</span>
+          </a>
+          <a href="zeno_review.html"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://tinyurl.com/review-icon" alt="Review" class="w-5 h-5 bg-white">
+            <span>Review</span>
+          </a>
+          <a href="zeno_profile.html"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://tinyurl.com/user-profile-new" alt="User" class="w-5 h-5 bg-white">
+            <span>User</span>
+          </a>
 						</nav>
 					</div>
 					<!-- Bottom Section -->
@@ -346,6 +349,7 @@
 			// show friendly modal-ish block
 			document.getElementById('summary').textContent = out.replace(/\n/g,' — ');
 			// Here you could integrate with routing or start timers
+			navigateToUrl(`zeno_chat.HTML?session=${encodeURIComponent(time)}&break=${encodeURIComponent(breakTime)}`);
 		});
 
 		// Init: default select pomodoro
@@ -356,7 +360,10 @@
 			const mc = document.querySelector('.practice-card[data-practice="mc"]');
 			if(mc){ mc.click(); }
 		})();
+
+        function navigateToUrl(url) {
+            window.location.href = url;
+        }
 	</script>
 </body>
 </html>
-
