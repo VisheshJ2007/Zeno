@@ -14,7 +14,7 @@ from bson import ObjectId
 # Make the project importable when Vercel imports api/index.py
 # (api/index.py will do: from backend.main import app)
 # ──────────────────────────────────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.abspath(_file_))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -43,6 +43,7 @@ def _cors_origins() -> list[str]:
         "http://localhost:5500",
         "http://127.0.0.1:3000",
         "http://localhost:3000",
+        "https://zeno-steel.vercel.app",
     ]
     # FRONTEND_ORIGIN (if you keep a separate site)
     fe = os.getenv("FRONTEND_ORIGIN")
