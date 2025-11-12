@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#E7F4FF] font-sans">
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-[#0B1736] text-white flex flex-col justify-between">
+      <div>
+        <!-- Profile -->
+        <div class="flex items-center space-x-3 p-4 border-b border-gray-700">
+          <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+          <div>
+            <p class="font-semibold text-sm">Juliana Silva</p>
+            <p class="text-xs text-gray-400">@julianasilva</p>
+          </div>
+        </div>
+
+  
+        <!-- Sidebar Navigation -->
+        <nav class="flex flex-col space-y-1 mt-4 px-3">
+          <!-- Dashboard Link (Make it active) -->
+          <a href="https://VisheshJ2007.github.io/Zeno/zeno.html"
+            class="flex items-center space-x-3 bg-[#1C2A4A] px-3 py-2 rounded-lg">
+            <img src="https://bit.ly/home-paage" alt="Dashboard" class="w-5 h-5 bg-white">
+            <span>Dashboard</span>
+          </a>
+
+          <!-- Sessions Link (Remove active class) -->
+          <a href="https://VisheshJ2007.github.io/Zeno/zeno_sessions.HTML"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://bit.ly/session-meeting" alt="Sessions" class="w-5 h-5 bg-white">
+            <span>Sessions</span>
+          </a>
+
+          <a href="https://VisheshJ2007.github.io/Zeno/zeno_progress.HTML"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://bit.ly/3LsNsSd" alt="Progress" class="w-5 h-5 bg-white">
+            <span>Progress</span>
+          </a>
+          <a href="https://VisheshJ2007.github.io/Zeno/zeno_practice.HTML"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://tinyurl.com/abc-multiple-choice" alt="Practice" class="w-5 h-5 bg-white">
+            <span>Practice</span>
+          </a>
+          <a href="https://VisheshJ2007.github.io/Zeno/zeno_review.html"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://tinyurl.com/review-icon" alt="Review" class="w-5 h-5 bg-white">
+            <span>Review</span>
+          </a>
+          <a href="https://VisheshJ2007.github.io/Zeno/zeno_profile.html"
+            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-[#1C2A4A]">
+            <img src="https://tinyurl.com/user-profile-new" alt="User" class="w-5 h-5 bg-white">
+            <span>User</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Bottom Section -->
+      <div class="p-4 space-y-2 text-sm text-gray-300 border-t border-gray-700">
+        <a href="#" class="flex items-center space-x-2 hover:text-white">
+          <img src="https://tinyurl.com/log-out-logo" alt="Logout" class="w-4 h-4 bg-white">
+          <span>Log Out</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-xl font-semibold text-gray-800">Study Dashboard</h1>
+        <div class="flex items-center space-x-3">
+          <input type="text" placeholder="Search..." class="px-3 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+          <img src="zeno-logo.png" alt="Zeno Logo" class="w-8 h-8">
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex space-x-3 mb-6">
+        <button class="px-4 py-2 bg-[#0B1736] text-white rounded-full">Current</button>
+        <button class="px-4 py-2 bg-white border rounded-full text-gray-700">Pending</button>
+        <button class="px-4 py-2 bg-white border rounded-full text-gray-700">Completed</button>
+      </div>
+
+      <!-- Top Section: Progress + Key Topics -->
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <!-- Progress -->
+        <div class="bg-white rounded-2xl p-6 shadow">
+          <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-gray-700">PROGRESS</h2>
+            <span class="text-sm text-gray-500">5-DAY STREAK</span>
+          </div>
+          <div class="flex items-center space-x-4 mt-4">
+            <span id="currentValue" class="w-10 h-10 flex items-center justify-center bg-[#0B1736] text-white rounded-full">18</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-4 relative">
+              <div id="progressBar" class="bg-[#0B1736] h-4 rounded-full transition-all duration-500" style="width: 94%;"></div>
+            </div>
+            <span id="goalValue" class="w-10 h-10 flex items-center justify-center bg-[#0B1736] text-white rounded-full">19</span>
+          </div>
+          <p class="mt-3 text-gray-600 text-sm">Total XP: ###</p>
+        </div>
+
+        <!-- Key Topics -->
+        <div class="bg-white rounded-2xl p-6 shadow">
+          <h2 class="font-semibold text-gray-700">KEY TOPICS</h2>
+            <ul id="key-topics-list" class="list-disc list-inside mt-3 text-gray-600">
+              <li>Bullet 1</li>
+              <li>Bullet 2</li>
+            </ul>
+        </div>
+      </div>
+
+      <!-- Upload Files + Create Study Plan -->
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <!-- Upload Files -->
+        <div class="bg-white rounded-2xl p-6 shadow flex flex-col items-center justify-center text-center">
+          <h2 class="font-semibold text-gray-700 mb-4">UPLOAD FILES</h2>
+
+          <div id="uploadDrop" class="border-2 border-dashed border-gray-400 rounded-full w-36 h-36 flex items-center justify-center mb-4 p-4">
+            <div class="text-center text-sm text-gray-600">
+              <img src="https://bit.ly/file-uploooad" alt="Upload" class="w-10 h-10 mx-auto mb-1">
+              <div id="uploadHint">Select an image / PDF</div>
+            </div>
+          </div>
+
+          <input id="fileInput" type="file" accept="image/*,application/pdf" class="hidden">
+          <div class="flex gap-3">
+            <button id="chooseFileBtn" class="bg-white border px-4 py-2 rounded">Choose File</button>
+            <button id="startOCRBtn" class="bg-[#0B1736] text-white px-6 py-2 rounded-full">Start OCR</button>
+          </div>
+
+          <div id="ocrStatus" class="mt-3 text-sm text-gray-500">No file chosen</div>
+
+          <button id="viewUploadsBtn" class="mt-3 bg-[#0B1736] text-white px-6 py-2 rounded-full">View Uploaded Files</button>
+
+          <!-- Uploaded transcriptions list (hidden until requested) -->
+          <div id="transcriptionsSection" class="mt-4 w-full hidden">
+            <h3 class="font-semibold text-gray-700 mb-2">Your Uploads</h3>
+            <div id="transcriptionsList" class="space-y-3 text-sm text-gray-700"></div>
+            <p id="transcriptionsMsg" class="text-xs text-gray-500 mt-2"></p>
+          </div>
+        </div>
+
+        <!-- Create Study Plan -->
+        <div class="bg-white rounded-2xl p-6 shadow">
+          <h2 class="font-semibold text-gray-700 mb-3">CREATE STUDY PLAN</h2>
+          <form id="planForm" class="flex flex-col gap-3">
+            <input id="topic" class="border rounded px-3 py-2" placeholder="Topic (e.g., Derivatives)" required>
+            <input id="notes" class="border rounded px-3 py-2" placeholder="Notes (optional)">
+            <button class="bg-[#0B1736] text-white px-4 py-2 rounded">Add</button>
+          </form>
+          <p id="planMsg" class="text-sm text-gray-500 mt-2"></p>
+        </div>
+      </div>
+
+      <!-- Your Plans -->
+      <div class="bg-white rounded-2xl p-6 shadow">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="font-semibold text-gray-700">Your Plans</h2>
+          <button id="refreshBtn" class="px-3 py-1 text-sm bg-gray-100 border rounded">Refresh</button>
+        </div>
+        <ul id="plansList" class="space-y-3"></ul>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Load Tesseract.js dynamically for client-side OCR
+    (function injectTesseract(){
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js';
+      s.async = true;
+      document.head.appendChild(s);
+    })();
+
+    // API base
+    const API = (window.ZENO_AUTH_CONFIG && window.ZENO_AUTH_CONFIG.API_BASE) || "http://localhost:8000";
+    // token is optional — site can run without login
+
+    function setStatus(ok) {
+      const dot = document.getElementById("statusDot");
+      if (dot) dot.className = "ml-2 inline-block w-2.5 h-2.5 rounded-full " + (ok ? "bg-green-500" : "bg-red-500");
+    }
+
+    async function ping() {
+      try {
+        const h = await fetch(`${API}/health`).then(r => r.json());
+        const d = await fetch(`${API}/db-ping`).then(r => r.json());
+        console.log("health:", h, "db:", d);
+        setStatus(true);
+      } catch (e) {
+        console.error("Backend not reachable:", e);
+        setStatus(false);
+      }
+    }
+
+    async function api(path, opts = {}) {
+      // default timeout for requests (ms)
+      const DEFAULT_TIMEOUT = 20000; // 20s
+      const headers = { "Content-Type": "application/json" };
+      try {
+        const token = localStorage.getItem('zeno_token');
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+      } catch {}
+
+      // Use AbortController to implement a timeout so the UI doesn't hang on network issues
+      const controller = new AbortController();
+      const timeout = (opts && opts.timeout) || DEFAULT_TIMEOUT;
+      const signal = controller.signal;
+
+      const fetchOpts = { headers, signal, ...opts };
+      // Make sure callers don't accidentally pass a signal
+      delete fetchOpts.signal;
+
+      const timer = setTimeout(() => controller.abort(), timeout);
+      try {
+        const res = await fetch(`${API}${path}`, { headers, signal, ...opts });
+        clearTimeout(timer);
+        if (!res.ok) {
+          // try to show response body for debugging
+          let text = '';
+          try { text = await res.text(); } catch (e) { text = ''; }
+          throw new Error(`${res.status} ${res.statusText}${text ? `: ${text}` : ''}`);
+        }
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) return res.json();
+        return res.text();
+      } catch (err) {
+        clearTimeout(timer);
+        if (err && err.name === 'AbortError') {
+          throw new Error('Request timed out (network or server not responding)');
+        }
+        throw err;
+      }
+    }
+
+    async function loadProfile() {
+      try {
+        const token = localStorage.getItem('zeno_token');
+        if (!token) return; // don't attempt if not authenticated
+        const me = await api('/auth/me');
+        // expose current user for other functions
+        window.currentUser = me;
+        const profileEl = document.querySelector('aside div div p.font-semibold');
+        if (profileEl) profileEl.textContent = me.username || me.email;
+        const handleEl = document.querySelector('aside div div p.text-xs');
+        if (handleEl) handleEl.textContent = '@' + (me.username || me.email.split('@')[0]);
+      } catch (e) {
+        console.warn('Failed to load profile:', e);
+      }
+    }
+
+    // Load user's transcriptions and render summaries/topics
+    async function loadTranscriptions() {
+      const section = document.getElementById('transcriptionsSection');
+      const list = document.getElementById('transcriptionsList');
+      const msg = document.getElementById('transcriptionsMsg');
+      if (!window.currentUser) {
+        alert('Please sign in to view your uploads.');
+        return;
+      }
+      section.classList.remove('hidden');
+      list.innerHTML = '<div class="text-gray-500">Loading…</div>';
+      msg.textContent = '';
+      try {
+        const resp = await api(`/api/ocr/user/${window.currentUser.id}/transcriptions`);
+        const items = resp.transcriptions || resp.results || [];
+        if (!items.length) {
+          list.innerHTML = '<div class="text-gray-500">No uploads found.</div>';
+          return;
+        }
+        list.innerHTML = '';
+        for (const t of items) {
+          const li = document.createElement('div');
+          li.className = 'border rounded-xl p-4 bg-gray-50';
+          const filename = t.file_info?.original_filename || t.filename || 'Unnamed file';
+          const created = t.created_at || t.content?.created_at || '';
+          const summary = t.content?.summary || '';
+          const topics = t.content?.key_topics || [];
+
+          li.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="font-semibold text-gray-800">${escapeHtml(filename)}</div>
+                <div class="text-xs text-gray-500 mt-1">${escapeHtml(created)}</div>
+                <div class="mt-3 text-sm text-gray-700">${summary ? escapeHtml(summary) : '<em>Summary pending…</em>'}</div>
+                <ul class="list-disc list-inside mt-2 text-sm text-gray-600">${topics.length ? topics.map(x => `<li>${escapeHtml(x)}</li>`).join('') : ''}</ul>
+              </div>
+              <div class="ml-4 flex flex-col gap-2">
+                <button class="px-3 py-1 rounded bg-blue-600 text-white text-sm" data-refresh="${escapeHtml(t.transcription_id || '')}">Refresh</button>
+                <button class="px-3 py-1 rounded bg-gray-100 text-sm" data-open="${escapeHtml(t.transcription_id || '')}">Open</button>
+              </div>
+            </div>`;
+
+          list.appendChild(li);
+        }
+      } catch (err) {
+        list.innerHTML = '';
+        msg.textContent = 'Error loading uploads: ' + err.message;
+      }
+    }
+
+    // Refresh a single transcription by id (re-fetch list for simplicity)
+    async function refreshTranscription(id) {
+      // for now, reload entire list — could optimize to fetch single doc
+      await loadTranscriptions();
+    }
+
+    // Hook buttons
+    document.addEventListener('click', function(e) {
+      const refreshId = e.target.getAttribute('data-refresh');
+      const openId = e.target.getAttribute('data-open');
+      if (refreshId) {
+        refreshTranscription(refreshId);
+      }
+      if (openId) {
+        // navigate to transcription detail page if you have one; fallback: alert
+        alert('Open transcription: ' + openId);
+      }
+    });
+
+    document.getElementById('viewUploadsBtn').addEventListener('click', () => loadTranscriptions());
+
+    // Guest OCR flow (no sign-in required)
+    const fileInput = document.getElementById('fileInput');
+    const chooseFileBtn = document.getElementById('chooseFileBtn');
+    const startOCRBtn = document.getElementById('startOCRBtn');
+    const ocrStatus = document.getElementById('ocrStatus');
+    let selectedFile = null;
+
+    chooseFileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      selectedFile = e.target.files[0];
+      if (selectedFile) {
+        ocrStatus.textContent = `Selected: ${selectedFile.name}`;
+      } else {
+        ocrStatus.textContent = 'No file chosen';
+      }
+    });
+
+    startOCRBtn.addEventListener('click', async () => {
+      if (!selectedFile) {
+        alert('Please choose a file first');
+        return;
+      }
+
+      // Wait for Tesseract to load
+      if (!window.Tesseract) {
+        ocrStatus.textContent = 'Loading OCR engine…';
+        await new Promise((res) => {
+          const check = setInterval(() => {
+            if (window.Tesseract) { clearInterval(check); res(true); }
+          }, 200);
+        });
+      }
+
+      try {
+        ocrStatus.textContent = 'Processing… (this may take a few seconds)';
+        const worker = window.Tesseract.createWorker({ logger: m => {
+          if (m && m.status && m.progress!=null) {
+            ocrStatus.textContent = `${m.status}: ${(m.progress*100).toFixed(0)}%`;
+          }
+        }});
+
+        await worker.load();
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        const { data } = await worker.recognize(selectedFile);
+        await worker.terminate();
+
+        const rawText = data && data.text ? data.text : '';
+        const confidence = data && data.confidence ? data.confidence : 0;
+
+        ocrStatus.textContent = 'Uploading transcription to server…';
+
+        // Prepare minimal structured_content
+        const paragraphs = rawText.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+        const word_count = (rawText.match(/\b\w+\b/g) || []).length;
+
+        const payload = {
+          filename: selectedFile.name || 'upload',
+          file_metadata: {
+            original_filename: selectedFile.name || 'upload',
+            file_size_bytes: selectedFile.size || 0,
+            file_type: selectedFile.type || 'image',
+            upload_timestamp: new Date().toISOString()
+          },
+          ocr_data: {
+            raw_text: rawText,
+            cleaned_text: rawText,
+            confidence: confidence,
+            processing_time_ms: 0,
+            language: 'eng'
+          },
+          structured_content: {
+            document_type: 'unknown',
+            sections: [],
+            paragraphs: paragraphs,
+            detected_subject: null,
+            word_count: word_count,
+            has_formulas: false,
+            has_tables: false,
+            has_lists: false
+          },
+          user_id: 'guest'
+        };
+
+        const resp = await api('/api/ocr/transcribe', { method: 'POST', body: JSON.stringify(payload) });
+        const tid = resp.transcription_id || resp.transcriptionId || null;
+        if (!tid) {
+          ocrStatus.textContent = 'Upload succeeded but no transcription id returned';
+          return;
+        }
+
+        // Persist last transcription id for guest users so we can load Key Topics
+        try { localStorage.setItem('last_transcription_id', tid); } catch(e) {}
+        // Trigger a short-delayed attempt to fetch topics (polling continues below)
+        setTimeout(() => { try { loadKeyTopicsForGuest(); } catch(e){} }, 500);
+
+        ocrStatus.textContent = `Transcription saved (id: ${tid}). Waiting for summary...`;
+
+        // Poll for summary
+        const start = Date.now();
+        const timeout = 60 * 1000; // 60s
+        let got = false;
+        while (Date.now() - start < timeout && !got) {
+          await new Promise(r => setTimeout(r, 2000));
+          try {
+            const doc = await api(`/api/ocr/transcription/${tid}`);
+            const summary = doc.content?.summary;
+            const topics = doc.content?.key_topics || [];
+            if (summary) {
+              ocrStatus.innerHTML = `<strong>Summary:</strong> ${escapeHtml(summary)}<br/><strong>Topics:</strong> ${topics.map(t=>escapeHtml(t)).join(', ')}`;
+              got = true;
+              break;
+            }
+          } catch (e) {
+            console.warn('poll error', e);
+          }
+        }
+
+        if (!got) {
+          ocrStatus.textContent = 'Summary not ready yet. It will appear under View Uploaded Files.';
+        }
+
+      } catch (err) {
+        console.error('OCR failed', err);
+        ocrStatus.textContent = 'OCR failed: ' + (err.message || err);
+      }
+    });
+
+    const planForm = document.getElementById("planForm");
+    const planMsg = document.getElementById("planMsg");
+    const plansList = document.getElementById("plansList");
+
+    planForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const submitBtn = planForm.querySelector('button');
+      if (submitBtn) submitBtn.disabled = true;
+      planMsg.textContent = "Saving…";
+      try {
+        const payload = {
+          topic: document.getElementById("topic").value.trim(),
+          notes: document.getElementById("notes").value || null,
+        };
+
+        // POST and capture returned created plan
+        const created = await api("/plans", { method: "POST", body: JSON.stringify(payload) });
+
+        // Show confirmation and refresh list
+        planMsg.textContent = "Saved ✔";
+        planForm.reset();
+        await loadPlans();
+
+        // Briefly highlight saved plan (if returned with id)
+        if (created && created.id) {
+          planMsg.textContent = `Saved ✔ (id: ${created.id})`;
+        }
+
+      } catch (err) {
+        console.error('Plan save failed', err);
+        // Try to show server error message if available
+        planMsg.textContent = err.message ? `Error: ${err.message}` : 'Error saving plan';
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        // Clear message after a short delay
+        setTimeout(() => {
+          planMsg.textContent = '';
+        }, 2500);
+      }
+    });
+
+    async function loadPlans() {
+      plansList.innerHTML = "<li class='text-gray-500'>Loading…</li>";
+      try {
+        const data = await api("/plans");
+        if (!data.length) {
+          plansList.innerHTML = "<li class='text-gray-500'>No plans yet.</li>";
+          return;
+        }
+        plansList.innerHTML = "";
+        for (const p of data) {
+          const li = document.createElement("li");
+          li.className = "border rounded-xl p-4 flex items-start justify-between";
+          li.innerHTML = `
+            <div>
+              <div class="font-semibold text-gray-800">${escapeHtml(p.topic)}</div>
+              <div class="text-sm text-gray-600">${escapeHtml(p.notes || "")}</div>
+            </div>
+            <div class="flex gap-2">
+              <button class="text-sm px-3 py-1 rounded bg-gray-100 border" data-edit="${p.id}">Edit</button>
+              <button class="text-sm px-3 py-1 rounded bg-red-600 text-white" data-del="${p.id}">Delete</button>
+            </div>`;
+          plansList.appendChild(li);
+        }
+      } catch (err) {
+        plansList.innerHTML = `<li class='text-red-600 text-sm'>${err.message}</li>`;
+      }
+    }
+
+    plansList.addEventListener("click", async (e) => {
+      const idDel = e.target.getAttribute("data-del");
+      const idEdit = e.target.getAttribute("data-edit");
+      if (idDel) {
+        if (!confirm("Delete this plan?")) return;
+        await api(`/plans/${idDel}`, { method: "DELETE" });
+        loadPlans();
+      }
+      if (idEdit) {
+        const newNotes = prompt("Update notes:");
+        if (newNotes != null) {
+          await api(`/plans/${idEdit}`, { method: "PATCH", body: JSON.stringify({ notes: newNotes }) });
+          loadPlans();
+        }
+      }
+    });
+
+    function escapeHtml(s) {
+      return (s || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    // --- Key Topics helpers (render dashboard top-box from latest transcription) ---
+    function renderKeyTopics(topics) {
+      const container = document.getElementById('key-topics-list');
+      if (!container) return;
+      if (!topics || !topics.length) {
+        container.innerHTML = '<li class="text-gray-500">No topics yet.</li>';
+        return;
+      }
+      container.innerHTML = topics.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+    }
+
+    async function loadKeyTopicsForUser() {
+      try {
+        if (!window.currentUser) return;
+        const resp = await api(`/api/ocr/user/${window.currentUser.id}/transcriptions`);
+        const items = resp.transcriptions || resp.results || [];
+        for (const t of items) {
+          if (t.content && Array.isArray(t.content.key_topics) && t.content.key_topics.length) {
+            renderKeyTopics(t.content.key_topics);
+            return;
+          }
+        }
+        renderKeyTopics([]);
+      } catch (e) {
+        console.warn('Failed loading key topics:', e);
+        renderKeyTopics([]);
+      }
+    }
+
+    async function loadKeyTopicsForGuest() {
+      try {
+        const tid = localStorage.getItem('last_transcription_id');
+        if (!tid) return;
+        const doc = await api(`/api/ocr/transcription/${tid}`);
+        const topics = doc.content?.key_topics || [];
+        renderKeyTopics(topics);
+      } catch (e) {
+        console.warn('Failed loading guest key topics:', e);
+      }
+    }
+
+  ping();
+  loadProfile();
+  loadPlans();
+  // Attempt to populate the top Key Topics box for guest and signed-in users
+  try { loadKeyTopicsForGuest(); } catch(e){}
+  try { loadKeyTopicsForUser(); } catch(e){}
+  </script>
+  <script>
+  async function loadTranscriptions() {
+    const section = document.getElementById('transcriptionsSection');
+    const list    = document.getElementById('transcriptionsList');
+    const msg     = document.getElementById('transcriptionsMsg');
+
+    section.classList.remove('hidden');
+    list.innerHTML = '<div class="text-gray-500">Loading…</div>';
+    msg.textContent = '';
+
+    // helper to render one doc
+    const renderOne = (doc) => {
+      const filename = doc.file_info?.original_filename || doc.filename || 'Unnamed file';
+      const created  = doc.created_at || doc.content?.created_at || '';
+      const summary  = doc.content?.summary || '';
+      const topics   = Array.isArray(doc.content?.key_topics) ? doc.content.key_topics : [];
+
+      const el = document.createElement('div');
+      el.className = 'border rounded-xl p-4 bg-gray-50';
+      el.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <div class="font-semibold text-gray-800">${filename}</div>
+            <div class="text-xs text-gray-500 mt-1">${created}</div>
+            <div class="mt-3 text-sm text-gray-700">
+              ${summary ? summary : '<em>Summary pending…</em>'}
+            </div>
+            <ul class="list-disc list-inside mt-2 text-sm text-gray-600">
+              ${topics.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}
+            </ul>
+          </div>
+        </div>`;
+      return el;
+    };
+
+    try {
+      // Try to list uploads (guest or signed-in)
+      const path = (window.currentUser && window.currentUser.id)
+        ? `/api/ocr/user/${window.currentUser.id}/transcriptions`
+        : `/api/ocr/user/guest/transcriptions`;
+
+      const data  = await api(path);
+      const items = data.transcriptions || data.results || [];
+
+      if (items.length) {
+        list.innerHTML = '';
+        items.forEach(t => list.appendChild(renderOne(t)));
+        return;
+      }
+
+      // No items—fallback to last id
+      const tid = localStorage.getItem('last_transcription_id');
+      if (tid) {
+  const doc = await api(`/api/ocr/transcription/${tid}`);
+        list.innerHTML = '';
+        list.appendChild(renderOne(doc));
+        return;
+      }
+
+      list.innerHTML = '<div class="text-gray-500">No uploads found.</div>';
+    } catch (err) {
+      // If list failed, try the single-doc fallback before giving up
+      try {
+        const tid = localStorage.getItem('last_transcription_id');
+        if (tid) {
+    const doc = await api(`/api/ocr/transcription/${tid}`);
+          list.innerHTML = '';
+          list.appendChild(renderOne(doc));
+          return;
+        }
+      } catch {}
+
+      console.error('loadTranscriptions error:', err);
+      list.innerHTML = '';
+      msg.textContent = 'Error loading uploads: ' + (err?.message || String(err));
+    }
+  }
+
+  document.getElementById('viewUploadsBtn')
+    ?.addEventListener('click', () => loadTranscriptions());
+</script>
+</body>
+</html>

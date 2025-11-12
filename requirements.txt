@@ -1,0 +1,37 @@
+# --- Core Framework ---
+fastapi==0.112.2
+uvicorn[standard]==0.30.6
+
+# --- Database ---
+motor==3.3.1                 # async MongoDB driver
+pymongo[srv]==4.6.0          # SRV support for mongodb+srv URIs
+dnspython==2.6.1             # required for SRV lookups
+
+# --- Environment / Settings ---
+python-dotenv==1.0.1
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# --- Auth & Security ---
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+email-validator==2.1.0.post1
+python-multipart==0.0.9
+itsdangerous==2.1.2
+
+# --- HTTP client (for external calls) ---
+httpx==0.25.2
+requests==2.31.0
+
+# --- Azure/OpenAI (new SDK works with Azure) ---
+openai==1.45.0
+
+# --- File utilities ---
+aiofiles==23.2.1
+
+# --- Testing ---
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+gunicorn==21.2.0
+

@@ -1,0 +1,40 @@
+# ----------------------------
+# Python virtual environments
+# ----------------------------
+.venv/
+venv/
+backend/.venv/
+
+# ----------------------------
+# Python cache and compiled files
+# ----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ----------------------------
+# Environment variables (secrets)
+# ----------------------------
+.env
+backend/.env
+
+# ----------------------------
+# Editor / IDE settings
+# ----------------------------
+.vscode/
+.idea/
+
+# ----------------------------
+# OS-generated files
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# Frontend / Node
+# ----------------------------
+node_modules/
+dist/
+build/
+
