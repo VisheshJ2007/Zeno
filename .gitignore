@@ -1,0 +1,14 @@
+﻿# OS/IDE
+.DS_Store
+.vscode/
+__pycache__/
+*.pyc
+
+# Envs & secrets
+.env
+*.env
+backend/.env
+
+# Node/npm (since you have package.json files)
+node_modules/
+npm-debug.log*

@@ -29,9 +29,9 @@ openai==1.45.0
 # --- File utilities ---
 aiofiles==23.2.1
 
-# --- Testing ---
+# --- Testing (optional but useful) ---
 pytest==7.4.3
 pytest-asyncio==0.21.1
 
-gunicorn==22.1.0
-
+# --- Prod process manager (Linux only; skipped on Windows) ---
+gunicorn==23.0.0; sys_platform != "win32"
