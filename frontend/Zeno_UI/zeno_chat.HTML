@@ -16,12 +16,16 @@
     .input{flex:1;background:white;border-radius:10px;padding:12px 14px;border:2px solid rgba(0,0,0,0.06);font-size:15px}
     .btn{width:48px;height:48px;border-radius:50%;border:none;background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(12,22,40,0.06)}
     .status{font-size:14px;color:var(--muted);margin-left:12px}
+    .file-name { font-size: 13px; color: var(--muted); margin-left: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+    .btn.secondary { background: #eef2f7; }
+    .btn.secondary svg { stroke: #334155; }
+
     @media (max-width:640px){.app-shell{margin:12px;border-radius:14px;height:86vh}}
   </style>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-  <!-- Timer Display -->
+  
   <div id="timerContainer" class="text-center py-3 px-4 bg-white/50 backdrop-blur-sm" style="display: none;">
     <div class="flex justify-center items-center gap-8">
       <div class="text-center">
@@ -43,14 +47,19 @@
     </div>
 
     <div class="composer">
+      <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+      <button id="attachBtn" class="btn secondary" title="Attach image">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="#64748b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
       <input id="userInput" class="input" placeholder="Type your message..." aria-label="Message input" />
       <button id="sendBtn" class="btn" title="Send">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 2L11 13" stroke="#0b76ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22l-4-9-9-4 20-7z" stroke="#0b76ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       
-      <div id="statusText" class="status" aria-live="polite"></div>
+      <div id="statusText" class="status" aria-live="polite">
+        <span id="fileName" class="file-name"></span>
+      </div>
     </div>
-
     <!-- Return to Home button -->
   <div class="flex justify-center mt-4">
     <button id="homeBtn"
@@ -65,8 +74,11 @@
     const chatArea = document.getElementById('chatArea');
     const input = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const attachBtn = document.getElementById('attachBtn');
+    const fileInput = document.getElementById('fileInput');
     const homeBtn = document.getElementById('homeBtn');
     const statusText = document.getElementById('statusText');
+    const fileNameEl = document.getElementById('fileName');
     let timerInterval; // To hold the interval ID
 
     function appendBubble(text, isBot=false){
@@ -96,20 +108,30 @@
 
     async function sendMessage(){
       const text = input.value.trim();
-      if(!text) return;
+      const file = fileInput.files[0];
+      if(!text && !file) return;
+
       appendBubble(text, false);
       statusText.textContent = 'Thinking…';
       sendBtn.disabled = true;
+      attachBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('message', text);
+      if (file) {
+        formData.append('file', file);
+      }
 
       try{
         const resp = await fetch(API_URL, {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ user: null, message: text })
+          // Do not set Content-Type header; browser does it for FormData
+          body: formData
         });
         if(!resp.ok){
           const err = await resp.json().catch(()=>({detail: resp.statusText}));
           statusText.textContent = 'Error: ' + (err.detail||resp.statusText);
+          fileNameEl.textContent = '';
           return;
         }
         const data = await resp.json();
@@ -123,18 +145,29 @@
         statusText.textContent = 'Network error: ' + e.message;
       } finally{
         sendBtn.disabled = false;
+        attachBtn.disabled = false;
         input.value = '';
+        fileInput.value = ''; // Clear the file input
+        fileNameEl.textContent = '';
         setTimeout(()=> statusText.textContent = '', 3000);
       }
     }
 
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        fileNameEl.textContent = fileInput.files[0].name;
+      } else {
+        fileNameEl.textContent = '';
+      }
+    });
     sendBtn.addEventListener('click', sendMessage);
     input.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
     homeBtn.addEventListener('click', () => {
       window.location.href = 'zeno_sessions.html';
       if (timerInterval) clearInterval(timerInterval);
     });
-
+    /*
     // --- Timer Logic ---
     function parseHHMMSSToSeconds(timeStr) {
       if (!timeStr || !/^\d{2}:\d{2}:\d{2}$/.test(timeStr)) return 0;
@@ -196,6 +229,7 @@
         startTimers(parseHHMMSSToSeconds(sessionTime), parseHHMMSSToSeconds(breakTime));
       }
     });
+    */
   </script>
 
   
